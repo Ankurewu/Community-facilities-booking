@@ -324,7 +324,7 @@ def create_app(config=None):
 
     @app.get("/<path:filename>")
     def assets(filename):
-        if filename not in ("app.js", "styles.css"):
+        if filename not in ("app.js", "portals.js", "styles.css"):
             return jsonify(error="Not found."), 404
         return send_from_directory(ROOT / "dist", filename)
 
@@ -346,17 +346,42 @@ def create_app(config=None):
     def register():
         rate_limit()
         body = data()
+        portal = body.get("portal", "customer")
+        if portal not in ("customer", "admin"):
+            raise ApiError("Choose the customer or admin section.", 400)
+        if portal == "admin" and not app.config["DEMO_MODE"]:
+            raise ApiError(
+                "Please ask an existing administrator to create your staff account.",
+                403,
+            )
+        role = "staff" if portal == "admin" else "customer"
         name = text(body.get("name"), "name", 100)
         email = identity(body.get("email"))
         hashed = generate_password_hash(password(body.get("password")))
         try:
             cur = db().execute(
-                "INSERT INTO users(name,email,password_hash,role,created_at) VALUES(?,?,?,'customer',?)",
-                (name, email, hashed, now()),
+                "INSERT INTO users(name,email,password_hash,role,staff_role,created_at) VALUES(?,?,?,?,?,?)",
+                (
+                    name,
+                    email,
+                    hashed,
+                    role,
+                    "admin" if role == "staff" else "coordinator",
+                    now(),
+                ),
             )
             db().commit()
         except sqlite3.IntegrityError:
             raise ApiError("An account already uses this email. Please sign in.", 409)
+        if role == "staff":
+            from features import create_challenge, public_user
+
+            user = (
+                db()
+                .execute("SELECT * FROM users WHERE id=?", (cur.lastrowid,))
+                .fetchone()
+            )
+            return jsonify(user=public_user(user), **create_challenge(user)), 201
         csrf = new_session(cur.lastrowid)
         return (
             jsonify(

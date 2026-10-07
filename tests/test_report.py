@@ -10,7 +10,7 @@ from datetime import timedelta
 from werkzeug.security import generate_password_hash
 import test_app
 from server import create_app, today, now
-from features import backup_bytes, restore_archive, totp
+from features import backup_bytes, restore_archive, totp, seed_demo
 
 
 class ReportTests(unittest.TestCase):
@@ -22,14 +22,76 @@ class ReportTests(unittest.TestCase):
 
     def test_portal_entry_and_legacy_links(self):
         entry = self.app.test_client().get("/")
-        self.assertIn(b'href="/customer"', entry.data)
-        self.assertIn(b'href="/admin"', entry.data)
+        self.assertIn(b'data-portal="customer"', entry.data)
+        self.assertIn(b'data-portal="admin"', entry.data)
         entry.close()
         for path in ("/customer", "/admin"):
             with self.app.test_client().get(path) as page:
                 self.assertEqual(page.status_code, 200)
         old = self.app.test_client().get("/?paid=1")
         self.assertEqual(old.location, "/customer?paid=1")
+
+    def test_demo_admin_signup_requires_mfa(self):
+        client = self.app.test_client()
+        self.tokens[id(client)] = client.get("/api/session").json["csrf"]
+        response = self.send(
+            client,
+            "/api/auth/register",
+            {
+                "portal": "admin",
+                "name": "Demo administrator",
+                "email": "new-admin@example.com",
+                "password": "New admin password!",
+            },
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertTrue(response.json["mfa_required"])
+        self.assertIsNone(client.get("/api/session").json["user"])
+        self.assertEqual(client.get("/api/admin/users").status_code, 401)
+        verified = self.send(
+            client,
+            "/api/auth/mfa",
+            {
+                "challenge": response.json["challenge"],
+                "code": response.json["demo_code"],
+            },
+        )
+        self.assertEqual(verified.json["user"]["staff_role"], "admin")
+        self.assertEqual(client.get("/api/admin/users").status_code, 200)
+
+    def test_normal_mode_blocks_public_admin_signup(self):
+        self.app.config["DEMO_MODE"] = False
+        client = self.app.test_client()
+        self.tokens[id(client)] = client.get("/api/session").json["csrf"]
+        response = self.send(
+            client,
+            "/api/auth/register",
+            {
+                "portal": "admin",
+                "name": "Not an administrator",
+                "email": "public-admin@example.com",
+                "password": "New admin password!",
+            },
+        )
+        self.assertEqual(response.status_code, 403)
+        with sqlite3.connect(self.database) as database:
+            self.assertEqual(
+                database.execute(
+                    "SELECT COUNT(*) FROM users WHERE email='public-admin@example.com'"
+                ).fetchone()[0],
+                0,
+            )
+
+    def test_demo_seed_does_not_invent_customer_requests(self):
+        seed_demo(self.app)
+        seed_demo(self.app)
+        self.assertEqual(self.staff.get("/api/bookings").json["bookings"], [])
+        booking = self.book().json["booking"]
+        seed_demo(self.app)
+        self.assertEqual(
+            [item["id"] for item in self.staff.get("/api/bookings").json["bookings"]],
+            [booking["id"]],
+        )
 
     def test_portal_login_requires_correct_account_type(self):
         client = self.app.test_client()

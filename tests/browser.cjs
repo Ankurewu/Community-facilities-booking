@@ -64,7 +64,7 @@ async function role(role) {
     await page.locator('#authForm button[type="submit"]').click();
   }
   await page.waitForFunction(() => !document.querySelector("#authDialog").open);
-  await page.waitForSelector("#homeStats .portal-stat");
+  await page.waitForSelector("#logoutButton");
   await page.click(
     '.site-header [data-mode="' +
       (role === "customer" || role === "service"
@@ -96,10 +96,129 @@ async function run() {
   await check("Entry page separates customer and admin portals", async () => {
     const page = await browser.newPage();
     await page.goto(url);
-    assert.equal(await page.locator('a[href="/customer"]').count(), 1);
-    assert.equal(await page.locator('a[href="/admin"]').count(), 1);
+    assert.equal(
+      await page.locator('button[data-portal="customer"]').count(),
+      1,
+    );
+    assert.equal(await page.locator('button[data-portal="admin"]').count(), 1);
     await page.close();
   });
+  await check(
+    "Customer and admin buttons open login popups with signup links",
+    async () => {
+      const page = await browser.newPage();
+      page.on("pageerror", (e) => errors.push(e.message));
+      await page.goto(url);
+      for (const portal of ["customer", "admin"]) {
+        await page.click('[data-portal="' + portal + '"]');
+        await page.waitForSelector("#entryDemo");
+        assert.equal(page.url(), url + "/");
+        assert.equal(
+          await page.locator('#entryForm input[name="email"]').isVisible(),
+          true,
+        );
+        assert.equal(
+          await page.locator('#entryForm input[name="password"]').isVisible(),
+          true,
+        );
+        assert.equal(await page.locator("#entrySignup").isVisible(), true);
+        await page.click("#entrySignup");
+        assert.equal(
+          await page.locator('#entryForm input[name="name"]').isVisible(),
+          true,
+        );
+        await page.click("#entryLogin");
+        await page.click("#entryClose");
+      }
+      await page.close();
+    },
+  );
+  await check(
+    "Customer signup creates a persistent account from the popup",
+    async () => {
+      const page = await browser.newPage();
+      page.on("pageerror", (e) => errors.push(e.message));
+      await page.goto(url);
+      await page.click('[data-portal="customer"]');
+      await page.waitForSelector("#entryDemo");
+      await page.click("#entrySignup");
+      await page.fill('#entryForm [name="name"]', "New demonstration customer");
+      await page.fill(
+        '#entryForm [name="email"]',
+        "popup-customer@example.com",
+      );
+      await page.fill(
+        '#entryForm [name="password"]',
+        "Popup customer password!",
+      );
+      await page.click('#entryForm button[type="submit"]');
+      await page.waitForURL(url + "/customer");
+      await page.waitForSelector("#logoutButton");
+      assert.match(
+        await page.locator("#accountButton").textContent(),
+        /New demonstration customer/,
+      );
+      await page.reload();
+      await page.waitForSelector("#logoutButton");
+      await page.close();
+    },
+  );
+  await check(
+    "Admin signup requires verification and opens an empty request queue",
+    async () => {
+      const page = await browser.newPage();
+      page.on("pageerror", (e) => errors.push(e.message));
+      await page.goto(url);
+      await page.click('[data-portal="admin"]');
+      await page.waitForSelector("#entryDemo");
+      await page.click("#entrySignup");
+      await page.fill(
+        '#entryForm [name="name"]',
+        "New demonstration administrator",
+      );
+      await page.fill('#entryForm [name="email"]', "popup-admin@example.com");
+      await page.fill(
+        '#entryForm [name="password"]',
+        "Popup administrator password!",
+      );
+      await page.click('#entryForm button[type="submit"]');
+      await page.waitForSelector('#entryForm [name="code"]');
+      await page.click('#entryForm button[type="submit"]');
+      await page.waitForURL(url + "/admin");
+      await page.waitForSelector("#staffMode");
+      assert.match(
+        await page.locator("#staffQueue").textContent(),
+        /No booking requests yet/,
+      );
+      assert.equal(await page.locator("#staffQueue [data-case]").count(), 0);
+      await page.close();
+    },
+  );
+  await check(
+    "Popup email/password login opens the correct customer or staff section",
+    async () => {
+      for (const portal of ["customer", "admin"]) {
+        const page = await browser.newPage();
+        page.on("pageerror", (e) => errors.push(e.message));
+        await page.goto(url);
+        await page.click('[data-portal="' + portal + '"]');
+        await page.waitForSelector("#entryDemo");
+        await page.fill(
+          '#entryForm [name="email"]',
+          (portal === "admin" ? "auditor" : "customer") + "@demo.example",
+        );
+        await page.fill('#entryForm [name="password"]', "DemoBooking2026!");
+        await page.click('#entryForm button[type="submit"]');
+        if (portal === "admin") {
+          await page.waitForSelector('#entryForm [name="code"]');
+          await page.click('#entryForm button[type="submit"]');
+        }
+        await page.waitForURL(url + "/" + portal);
+        await page.waitForSelector("#logoutButton");
+        await page.close();
+      }
+    },
+  );
   const customer = (current = await role("customer"));
   await check(
     "Portal dashboard and role routing stay separate after reload",
@@ -554,6 +673,63 @@ async function run() {
       await admin.click('a[href="/api/admin/backup"]');
       const download = await wait;
       assert.match(download.suggestedFilename(), /private-backup\.zip$/);
+    },
+  );
+  await check(
+    "Admin request details offer Accept/Reject and rejection reaches the customer",
+    async () => {
+      const booking = await customer.evaluate(async () => {
+        const catalog = await api("/venues");
+        const day = new Date(catalog.today + "T12:00:00Z");
+        day.setUTCDate(day.getUTCDate() + 55);
+        return (
+          await api("/bookings", "POST", {
+            venue: "malak",
+            eventDate: day.toISOString().slice(0, 10),
+            slot: "18:00–22:00",
+            eventName: "Request to review and reject",
+            eventType: "Community meeting",
+            attendance: 20,
+            setupTime: "18:00",
+            cleanupTime: "22:00",
+            alcohol: "No",
+            notes: "",
+            declaration: true,
+            adult: true,
+            privacy: true,
+          })
+        ).booking;
+      });
+      await admin.click('.site-header [data-mode="staff"]');
+      await admin.waitForSelector('[data-case="' + booking.id + '"]');
+      await admin.click('[data-case="' + booking.id + '"]');
+      assert.equal(
+        await admin
+          .locator('#staffCase [data-id="' + booking.id + ':approved"]')
+          .textContent(),
+        "Accept",
+      );
+      assert.equal(
+        await admin
+          .locator('#staffCase [data-id="' + booking.id + ':rejected"]')
+          .textContent(),
+        "Reject",
+      );
+      await admin.fill(
+        "#decisionReason",
+        "This event is outside the permitted facility use.",
+      );
+      admin.once("dialog", (dialog) => dialog.accept());
+      await admin.click('#staffCase [data-id="' + booking.id + ':rejected"]');
+      await admin.waitForFunction(() =>
+        document.querySelector("#staffCase").textContent.includes("Rejected"),
+      );
+      await customer.click('.site-header [data-mode="bookings"]');
+      await customer.waitForSelector("#booking-" + booking.id);
+      assert.match(
+        await customer.locator("#booking-" + booking.id).textContent(),
+        /Rejected/,
+      );
     },
   );
   await check("Mobile reflow and HTML-escaped user content", async () => {

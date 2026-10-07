@@ -2382,37 +2382,3 @@ def seed_demo(app):
                     ),
                 )
         db().commit()
-        owner = (
-            db()
-            .execute("SELECT * FROM users WHERE email='customer@demo.example'")
-            .fetchone()
-        )
-        g.user = owner
-        if (
-            not db()
-            .execute("SELECT id FROM bookings WHERE user_id=?", (owner["id"],))
-            .fetchone()
-        ):
-            for days, vid, name in [
-                (7, "nightcliff", "Neighbourhood planning meeting"),
-                (14, "malak", "Community garden briefing"),
-                (21, "lyons", "Local volunteers catch-up"),
-            ]:
-                b = dict(
-                    venue=venue_for(vid),
-                    dates=[(core().today() + timedelta(days=days)).isoformat()],
-                    slot="13:00–17:00",
-                    event_name=name,
-                    event_type="Community meeting",
-                    attendance=30,
-                    setup_time="12:30",
-                    cleanup_time="17:30",
-                    alcohol="No",
-                    notes="Seeded coursework sample. You can create your own applications too.",
-                    amount=5 * venue_for(vid)["rate_cents"],
-                    channel="online",
-                    required=[],
-                    documents=[],
-                )
-                insert_booking(owner["id"], b)
-            db().commit()

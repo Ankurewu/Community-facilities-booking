@@ -7,9 +7,9 @@ A working demonstration of the **Darwin Community Facilities Booking and Access 
 1. Stop the previous website: press **Ctrl+C** in its command window.
 2. Download the newest ZIP from GitHub and **Extract All**. Open the folder containing `server.py`, `features.py` and `START_DEMO.bat`.
 3. Double-click **`START_DEMO.bat`**. Keep its window open. It creates the Python environment, installs dependencies and opens the website once the server responds.
-4. The opening page has two separate sections: **Customer portal** and **Admin portal**.
-5. Enter **Customer portal**, expand **Teacher demonstration · sample accounts and walkthrough**, click **customer**, then **Sign in**. Your dashboard links to facility search, My bookings and your inbox. There are already three sample applications in My bookings.
-6. In another browser profile, enter **Admin portal** and choose **coordinator** in its demo panel. Sign in, then use the prefilled local test verification code. Open **Assessment** from the staff dashboard to review applications.
+4. The opening page has **Customer** and **Admin** buttons. Clicking either opens an email-and-password popup on the same page.
+5. Click **Customer**, then **Use sample account** and **Sign in**. To create your own account instead, click **Sign up** at the bottom of the popup. Your dashboard links to Find a facility, My bookings and your inbox.
+6. In another browser profile, click **Admin** and sign in using the sample administrator or create a demo admin account with **Sign up**. Complete the prefilled verification step. Admins immediately see **Customer booking requests**, with **Accept** and **Reject** controls on eligible requests. New installations start with an empty request list until a customer submits a booking. Previously saved requests remain intact.
 
 If a command window reports that port 8000 is busy, stop your previous server first. If needed, open Command Prompt **inside this extracted project folder** and run:
 
@@ -43,9 +43,11 @@ python3 -m venv .venv
 
 ## Sample roles
 
-**Customer portal (`/customer`)** has its own login, registration, dashboard, facility search, bookings and inbox. **Admin portal (`/admin`)** has a separate staff login and dashboard for assessment, calendar, finance, assisted booking, reports and administration. Only tasks allowed by the signed-in staff role appear. Customer credentials are rejected by the admin login, and staff credentials are rejected by the customer login. Existing server-side permissions protect the APIs. Staff accounts are created by the CLI or managed by an administrator; public registration creates customers only.
+**Customer portal (`/customer`)** has its own login, registration, dashboard, facility search, bookings and inbox. **Admin portal (`/admin`)** has a separate staff login, booking request queue and dashboard for assessment, calendar, finance, assisted booking, reports and administration. Only tasks allowed by the signed-in staff role appear. Customer credentials are rejected by the admin login, and staff credentials are rejected by the customer login. Existing server-side permissions protect the APIs.
 
-The root page (`/`) lets you choose a portal. **Choose portal** in either header returns there. One authenticated session is shared within a browser profile: opening the opposite portal while signed in sends you back to your account's portal. Use separate browser profiles to demonstrate both accounts simultaneously.
+Both opening-page login popups have **Sign up** at the bottom, and signup forms have **Sign in** for existing accounts. In explicit teacher-demo mode, Admin signup creates a demo administrator and requires staff MFA before granting access. Normal mode permits public customer signup only; staff accounts are created by the CLI or an authorised operator.
+
+The root page (`/`) lets you choose an account type and sign in using its popup. **Choose portal** in either header returns there. One authenticated session is shared within a browser profile: opening the opposite portal while signed in sends you back to your account's portal. Use separate browser profiles to demonstrate both accounts simultaneously.
 
 The password for the **explicit local demo mode only** is `DemoBooking2026!`. Clicking a role in the demo panel prefills the email and password; it does not bypass authentication.
 
@@ -99,7 +101,7 @@ Status is authoritative in the portal. Outbox delivery outcomes are simulated, n
 .venv\Scripts\python server.py run
 ```
 
-Normal mode defaults to `instance/bookings.sqlite3`; demo mode uses **a separate `instance/demo.sqlite3`**. Existing accounts/bookings are preserved by additive migrations. Public registration creates a customer account. Normal mode does not seed public demo credentials or expose demo codes/mailbox. Its payment and delivery adapters remain simulations and must be replaced before any real service use.
+Normal mode defaults to `instance/bookings.sqlite3`; demo mode uses **a separate `instance/demo.sqlite3`**. Existing accounts/bookings are preserved by additive migrations. In normal mode, public registration creates a customer account. Normal mode does not seed public demo credentials or expose demo codes/mailbox. Its payment and delivery adapters remain simulations and must be replaced before any real service use.
 
 To create your own staff account in normal mode (password prompted securely):
 

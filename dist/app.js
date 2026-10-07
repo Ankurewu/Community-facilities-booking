@@ -171,13 +171,15 @@ function formHTML(content, submit = "Save") {
   return `<form class="dialog-form">${content}<button type="submit" class="primary-button">${esc(submit)}</button></form>`;
 }
 function openAuth(mode = "login") {
-  if (state.portal === "admin" && mode === "register") mode = "login";
   state.auth = mode;
   state.challenge = null;
   $("#authTitle").textContent = {
     login:
       state.portal === "admin" ? "Admin & staff sign in" : "Customer sign in",
-    register: "Create your account",
+    register:
+      state.portal === "admin"
+        ? "Create admin account"
+        : "Create customer account",
     password: "Change password",
     forgot: "Recover your account",
     reset: "Set a new password",
@@ -259,7 +261,8 @@ function openAuth(mode = "login") {
     $("#" + id).classList.toggle("is-active", m === mode);
   }
   $("#passwordTab").hidden = !state.user;
-  if (state.portal === "admin") $("#registerTab").hidden = true;
+  $("#authAccountPrompt").hidden = !!state.user || mode !== "login";
+  $("#authLoginPrompt").hidden = !!state.user || mode === "login";
   if (!$("#authDialog").open) $("#authDialog").showModal();
 }
 async function authSubmit(e) {
@@ -312,8 +315,12 @@ async function authSubmit(e) {
     updateAccount();
     await loadInboxCount();
     if (can("assist")) await loadApplicants();
-    await setMode("home");
-    notice("Signed in. Choose an action from your dashboard.");
+    await setMode(state.portal === "admin" && can("assess") ? "staff" : "home");
+    notice(
+      state.portal === "admin" && can("assess")
+        ? "Signed in. Customer booking requests appear here. Select a request to accept or reject it."
+        : "Signed in. Choose an action from your dashboard.",
+    );
   } catch (err) {
     $("#authFormError").textContent = err.message;
   }
@@ -904,10 +911,19 @@ function renderQueue() {
         (b) =>
           `<button class="queue-item${b.id === state.selected ? " is-selected" : ""}" data-case="${b.id}" type="button"><span><strong>${b.reference}</strong><small>${esc(b.customer_name)} · ${dateText(b.event_date)}</small></span><span class="status-pill waiting">${esc(statusText(b))}</span></button>`,
       )
-      .join("") || empty("No matching requests.");
+      .join("") ||
+    empty(
+      state.bookings.length
+        ? "No matching requests."
+        : "No booking requests yet. Customer requests will appear here after they submit a booking.",
+    );
   const b = bookings.find((b) => b.id === state.selected);
   if (!b) {
-    $("#staffCase").innerHTML = empty("Select a request from the queue.");
+    $("#staffCase").innerHTML = empty(
+      state.bookings.length
+        ? "Select a request from the queue."
+        : "No customer has requested a booking yet.",
+    );
     return;
   }
   const v = state.venues.find((v) => v.id === b.venue_id);
@@ -925,7 +941,7 @@ function renderQueue() {
       .map((d) => button("Verify " + d.kind, "verify-doc", d.id))
       .join(
         "",
-      )}${b.status === "pending" && b.phase !== "under_review" ? button("Start assessment", "start-review", b.id) : ""}</div>${decidable ? `<label>Decision reason<textarea id="decisionReason" rows="3" maxlength="2000" required></textarea></label><label>Approval conditions<textarea id="decisionConditions" rows="2" maxlength="2000" placeholder="Key collection, cleaning, permit conditions…"></textarea></label><div class="action-row decision-actions">${button("Request information", "decision", b.id + ":needs_info")}${button("Reject", "decision", b.id + ":rejected")}${button("Approve", "decision", b.id + ":approved", "primary-button")}</div>` : ""}${b.status === "approved" && b.payment?.status === "paid" && !b.completed ? button("Mark event completed", "complete", b.id) : ""}${b.amendments
+      )}${b.status === "pending" && b.phase !== "under_review" ? button("Start assessment", "start-review", b.id) : ""}</div>${decidable ? `<label>Decision reason<textarea id="decisionReason" rows="3" maxlength="2000" required></textarea></label><label>Approval conditions<textarea id="decisionConditions" rows="2" maxlength="2000" placeholder="Key collection, cleaning, permit conditions…"></textarea></label><div class="action-row decision-actions">${button("Request information", "decision", b.id + ":needs_info")}${button("Reject", "decision", b.id + ":rejected")}${button("Accept", "decision", b.id + ":approved", "primary-button")}</div>` : ""}${b.status === "approved" && b.payment?.status === "paid" && !b.completed ? button("Mark event completed", "complete", b.id) : ""}${b.amendments
       .filter((a) => a.status === "requested")
       .map(
         (a) =>
@@ -1643,6 +1659,7 @@ $("#accountButton").addEventListener(
   safe(() => (state.user ? profileDialog() : openAuth())),
 );
 $("#closeAuth").addEventListener("click", () => $("#authDialog").close());
+$("#authBackLogin").addEventListener("click", () => openAuth("login"));
 for (const [id, mode] of [
   ["loginTab", "login"],
   ["registerTab", "register"],
@@ -1803,7 +1820,7 @@ async function init() {
       }),
     );
   }
-  await setMode("home");
+  await setMode(state.portal === "admin" && can("assess") ? "staff" : "home");
   if (query.has("reset")) openAuth("reset");
   if (query.has("booking") && state.user)
     await openBooking(query.get("booking"));

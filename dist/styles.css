@@ -21,6 +21,11 @@
   color: white;
   white-space: nowrap;
 }
+.auth-footer {
+  margin-top: 1.25rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--line);
+}
 .portal-landing,
 .portal-home {
   padding: 2rem 0;

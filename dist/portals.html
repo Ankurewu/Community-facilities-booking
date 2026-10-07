@@ -26,24 +26,24 @@
       <h1>One community. A space for every occasion.</h1>
       <p>Choose your section to get started.</p>
       <div class="portal-grid">
-        <a class="portal-card" href="/customer">
+        <button class="portal-card" type="button" data-portal="customer">
           <p class="eyebrow">For customers</p>
-          <h2>Customer portal</h2>
+          <h2>Customer</h2>
           <p>
             Explore facilities, create an account and book a space. Track
             approvals, pay, amend or cancel your bookings.
           </p>
-          <span>Enter Customer portal →</span>
-        </a>
-        <a class="portal-card" href="/admin">
+          <span>Customer sign in →</span>
+        </button>
+        <button class="portal-card" type="button" data-portal="admin">
           <p class="eyebrow">For administrators & staff</p>
-          <h2>Admin portal</h2>
+          <h2>Admin</h2>
           <p>
             Assess applications, manage the calendar, handle payments and
             refunds, configure facilities and view reports.
           </p>
-          <span>Enter Admin portal →</span>
-        </a>
+          <span>Admin sign in →</span>
+        </button>
       </div>
       <p class="info-callout">
         Coursework demonstration. Accounts and bookings persist. Payments and
@@ -51,5 +51,44 @@
         portal's Teacher demonstration panel.
       </p>
     </main>
+    <dialog id="entryDialog" aria-labelledby="entryTitle">
+      <div class="section-heading">
+        <h2 id="entryTitle">Sign in</h2>
+        <button
+          id="entryClose"
+          class="text-button"
+          type="button"
+          aria-label="Close login popup"
+        >
+          Close
+        </button>
+      </div>
+      <p id="entryDescription"></p>
+      <form id="entryForm" class="dialog-form"></form>
+      <p id="entryError" class="error-text" role="alert"></p>
+      <div id="entryDemo" class="info-callout" hidden>
+        <button id="entryDemoFill" class="text-button" type="button">
+          Use sample account
+        </button>
+      </div>
+      <div class="auth-footer">
+        <p id="entryAccountPrompt">
+          Don't have an account?
+          <button id="entrySignup" class="text-button" type="button">
+            Sign up
+          </button>
+        </p>
+        <p id="entryLoginPrompt" hidden>
+          Already have an account?
+          <button id="entryLogin" class="text-button" type="button">
+            Sign in
+          </button>
+        </p>
+        <button id="entryForgot" class="text-button" type="button">
+          Forgot password?
+        </button>
+      </div>
+    </dialog>
+    <script src="/portals.js"></script>
   </body>
 </html>

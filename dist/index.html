@@ -186,8 +186,6 @@
         <div class="mode-tabs">
           <button id="loginTab" class="mode-tab is-active" type="button">
             Sign in</button
-          ><button id="registerTab" class="mode-tab" type="button">
-            Create account</button
           ><button id="forgotTab" class="mode-tab" type="button">
             Forgot password</button
           ><button id="passwordTab" class="mode-tab" type="button" hidden>
@@ -229,6 +227,20 @@
             Sign in
           </button>
         </form>
+        <div class="auth-footer">
+          <p id="authAccountPrompt">
+            Don't have an account?
+            <button id="registerTab" class="text-button" type="button">
+              Sign up
+            </button>
+          </p>
+          <p id="authLoginPrompt" hidden>
+            Already have an account?
+            <button id="authBackLogin" class="text-button" type="button">
+              Sign in
+            </button>
+          </p>
+        </div>
       </dialog>
       <dialog id="workDialog" aria-labelledby="workTitle">
         <div class="section-heading">
@@ -662,10 +674,10 @@
         <div class="page-intro staff-intro">
           <div>
             <p class="eyebrow">Facility coordinator</p>
-            <h1 id="staffTitle" tabindex="-1">Application assessment queue</h1>
+            <h1 id="staffTitle" tabindex="-1">Customer booking requests</h1>
             <p>
-              Review requests and record a decision with a reason. Applicants
-              see every update.
+              Select a customer request, then accept or reject it with a reason.
+              Customers see the decision in My bookings.
             </p>
           </div>
           <button id="refreshStaff" class="secondary-button" type="button">

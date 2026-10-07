@@ -2,7 +2,7 @@
 
 Start `START_DEMO.bat` and keep the server window open. Use separate browser profiles/incognito windows for customer and staff. Avoid sensitive real details. Screens are the product; source/tests/traceability are the supporting evidence.
 
-The opening page offers **Customer portal** and **Admin portal**. Customers use `/customer`; all staff roles use `/admin`. Each has its own login, navigation and dashboard. The customer dashboard links to facility search, bookings and inbox. The admin dashboard shows only the operations allowed for that staff role. Open **Find a facility** to begin the customer journey and **Assessment** to begin the coordinator journey. Trying a customer account in the admin login is rejected, and vice versa.
+The opening page offers **Customer** and **Admin** buttons. Each opens an email/password popup with **Sign up** at the bottom. Demo mode supports creating both customer and administrator accounts; staff must finish verification. Customers then use `/customer`; all staff roles use `/admin`. Admins/coordinators immediately see **Customer booking requests**. Each request displays customer, facility, dates and details, with **Accept** and **Reject** buttons and a required decision reason. If no customer has submitted a request, the list is empty. Other staff roles see their authorised dashboard tasks. Open **Find a facility** to begin the customer journey. Trying a customer account in the admin login is rejected, and vice versa.
 
 1. **Explain the service gap (1 minute).** Enter Customer portal and choose Find a facility. Show facility comparison before registration: access, equipment, rules, hourly fees and capacity. State that these are coursework configuration, not confirmed Council data. Explain the shared record from enquiry to confirmation.
 2. **Apply (2 minutes).** Use customer@demo.example via the demo panel. Choose Nightcliff, a future morning slot and two weekly occurrences. Enter a workshop, 40 people, setup 08:30 and cleanup 12:30. Confirm adult responsibility and privacy. Set alcohol to Yes; insurance and permit become required. Try continuing without evidence to show a recoverable error. Upload both sample PDFs, save a draft, resume it and submit.
@@ -15,7 +15,7 @@ The opening page offers **Customer portal** and **Admin portal**. Customers use 
 
 ## A shorter reliable path
 
-Use the three seeded customer applications if time is limited. They are standard community meetings requiring no mandatory evidence. Pick one in coordinator Assessment, approve with conditions, then switch to the customer and demonstrate checkout, receipt, cancellation/refund and finance. Add one new complex application to demonstrate adaptive evidence.
+Start by showing the empty admin queue in a fresh installation. Create one standard Community meeting with no alcohol as the customer; this needs no mandatory evidence. Refresh the admin queue, select the request, enter a decision reason and click **Accept**. Switch to the customer to demonstrate checkout, receipt, cancellation/refund and finance. Submit another request and click **Reject** with a reason to show the customer-visible outcome. Add one complex application to demonstrate adaptive evidence if time permits.
 
 ## Practical tips
 
@@ -23,7 +23,7 @@ Use the three seeded customer applications if time is limited. They are standard
 - Use Refresh on customer/staff screens after actions in another browser; the demo does not claim push notifications.
 - If a staff TOTP code was just used, wait until the next 30-second code window before signing into that same account again. Different role accounts are independent.
 - The demo allows early event completion for presentation. Normal mode waits until all dates finish.
-- The local demo database persists. Restarting does not reset your work or create duplicate seeded records. For a fresh rehearsal, **stop the server** and rename `instance/demo.sqlite3` and `instance/demo.key` together to a private backup; never erase real data blindly.
+- The local demo database persists. Restarting keeps your work and does not invent requests or duplicate sample accounts. New installations have sample accounts but zero bookings. For a fresh rehearsal, **stop the server** and rename `instance/demo.sqlite3` and `instance/demo.key` together to a private backup; never erase real data blindly.
 - If a conflict occurs, choose another date/facility/time. That is the intended transactional control.
 - Be prepared to explain why simulated integrations are separated from the authoritative application record and what real deployment would need.
 - Use your actual work and contribution when updating the report's contribution statement. The demonstration cannot guarantee an HD mark.

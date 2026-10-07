@@ -4,11 +4,12 @@ Validation is for the development workspace, not a public deployment or an indep
 
 ## Observed final run · 7 October 2026
 
-- **32 backend tests passed**, with no failed or skipped tests.
-- **19 real-browser acceptance workflows passed**, with no JavaScript runtime errors.
+- **35 backend tests passed**, with no failed or skipped tests.
+- **24 real-browser acceptance workflows passed**, with no JavaScript runtime errors.
 - Separate portal entry, role-specific dashboards, opposite-portal session routing, and wrong-portal login rejection were checked. The original customer and staff booking workflows passed through the separate portals.
 - Current-instance homepage, venue API, session API, demo account metadata and sample PDF requests returned HTTP 200.
-- Restart/reseed check retained six synthetic accounts and three seeded applications without duplicating records.
+- Both homepage buttons open email/password popups with bottom signup links. Customer and demo admin signup persist; admin access is withheld until MFA succeeds. Normal mode rejects public admin signup.
+- New demo databases start with sample accounts and no bookings. Repeated seeding does not invent requests and preserves submitted customer applications. Admins land directly on the request queue; Accept/Reject decisions are reflected in the customer view.
 - A local sample of 40 venue-API requests with four clients measured p95 **5.95 ms**. This is a small local sample, not the report’s agreed peak-load acceptance test.
 - Python/JavaScript syntax, dependency consistency and Git whitespace checks passed.
 
