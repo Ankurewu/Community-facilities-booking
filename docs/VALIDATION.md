@@ -4,8 +4,9 @@ Validation is for the development workspace, not a public deployment or an indep
 
 ## Observed final run · 7 October 2026
 
-- **30 backend tests passed**, with no failed or skipped tests.
-- **17 real-browser acceptance workflows passed**, with no JavaScript runtime errors.
+- **32 backend tests passed**, with no failed or skipped tests.
+- **19 real-browser acceptance workflows passed**, with no JavaScript runtime errors.
+- Separate portal entry, role-specific dashboards, opposite-portal session routing, and wrong-portal login rejection were checked. The original customer and staff booking workflows passed through the separate portals.
 - Current-instance homepage, venue API, session API, demo account metadata and sample PDF requests returned HTTP 200.
 - Restart/reseed check retained six synthetic accounts and three seeded applications without duplicating records.
 - A local sample of 40 venue-API requests with four clients measured p95 **5.95 ms**. This is a small local sample, not the report’s agreed peak-load acceptance test.

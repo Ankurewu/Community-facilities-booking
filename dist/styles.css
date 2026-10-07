@@ -17,6 +17,72 @@
   --shadow: 0 10px 28px rgba(16, 42, 67, 0.08);
 }
 
+.portal-switch {
+  color: white;
+  white-space: nowrap;
+}
+.portal-landing,
+.portal-home {
+  padding: 2rem 0;
+}
+.portal-landing > h1 {
+  max-width: 780px;
+  font-size: clamp(2rem, 4vw, 3.4rem);
+  line-height: 1.15;
+}
+.portal-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: 1.25rem;
+  margin: 2rem 0;
+}
+.portal-card {
+  display: block;
+  padding: 1.75rem;
+  background: white;
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-top: 4px solid var(--blue);
+  border-radius: var(--radius);
+  text-align: left;
+  text-decoration: none;
+  box-shadow: var(--shadow);
+}
+.portal-card:hover {
+  border-color: var(--blue);
+  background: var(--soft);
+}
+.portal-card h2 {
+  margin-top: 0;
+}
+.portal-card p {
+  color: var(--muted);
+}
+.portal-card span {
+  color: var(--blue-dark);
+  font-weight: 700;
+}
+.portal-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+.portal-stat {
+  flex: 1;
+  min-width: 130px;
+  display: grid;
+  padding: 1.25rem;
+  background: var(--soft);
+  border-radius: var(--radius);
+}
+.portal-stat strong {
+  font-size: 2rem;
+  color: var(--navy);
+}
+body[data-portal="admin"] .site-header {
+  border-bottom-color: var(--teal);
+}
+
 * {
   box-sizing: border-box;
 }

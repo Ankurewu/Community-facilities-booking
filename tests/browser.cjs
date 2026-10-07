@@ -52,8 +52,8 @@ async function role(role) {
   const ctx = await browser.newContext({ acceptDownloads: true });
   const page = await ctx.newPage();
   page.on("pageerror", (e) => errors.push(e.message));
-  await page.goto(url);
-  await page.waitForSelector("[data-venue]");
+  await page.goto(url + (role === "customer" ? "/customer" : "/admin"));
+  await page.waitForSelector("#demoTools");
   await page.locator("#demoTools summary").click();
   await page
     .locator('.demo-role[data-email="' + role + '@demo.example"]')
@@ -64,6 +64,18 @@ async function role(role) {
     await page.locator('#authForm button[type="submit"]').click();
   }
   await page.waitForFunction(() => !document.querySelector("#authDialog").open);
+  await page.waitForSelector("#homeStats .portal-stat");
+  await page.click(
+    '.site-header [data-mode="' +
+      (role === "customer" || role === "service"
+        ? "customer"
+        : role === "finance"
+          ? "finance"
+          : role === "admin"
+            ? "admin"
+            : "staff") +
+      '"]',
+  );
   return page;
 }
 async function run() {
@@ -81,7 +93,32 @@ async function run() {
     ...(executable ? { executablePath: executable } : {}),
     args: ["--no-sandbox"],
   });
+  await check("Entry page separates customer and admin portals", async () => {
+    const page = await browser.newPage();
+    await page.goto(url);
+    assert.equal(await page.locator('a[href="/customer"]').count(), 1);
+    assert.equal(await page.locator('a[href="/admin"]').count(), 1);
+    await page.close();
+  });
   const customer = (current = await role("customer"));
+  await check(
+    "Portal dashboard and role routing stay separate after reload",
+    async () => {
+      assert.equal(
+        await customer.locator("#portalLabel").textContent(),
+        "Customer portal",
+      );
+      await customer.click('.site-header [data-mode="home"]');
+      await customer.waitForSelector("#homeStats .portal-stat");
+      assert.equal(
+        await customer.locator("#homeActions .portal-card").count(),
+        3,
+      );
+      await customer.goto(url + "/admin");
+      await customer.waitForURL(url + "/customer");
+      await customer.click('.site-header [data-mode="customer"]');
+    },
+  );
   await check(
     "Customer login exposes usable facility and booking screens",
     async () => {

@@ -17,10 +17,18 @@
         <span class="brand-mark" aria-hidden="true">D</span>
         <span
           ><strong>DCF-BAS</strong
-          ><small>Community facilities booking</small></span
+          ><small id="portalLabel">Community facilities booking</small></span
         >
       </div>
       <nav class="mode-tabs" aria-label="Main navigation">
+        <button
+          class="mode-tab"
+          type="button"
+          data-mode="home"
+          aria-pressed="false"
+        >
+          Dashboard
+        </button>
         <button
           class="mode-tab is-active"
           type="button"
@@ -114,6 +122,7 @@
           Sign out
         </button>
       </nav>
+      <a class="portal-switch" href="/">Choose portal</a>
     </header>
 
     <div class="prototype-banner" role="note">
@@ -124,6 +133,16 @@
     </div>
 
     <main id="main">
+      <section id="homeMode" class="portal-home">
+        <p class="eyebrow" id="homeEyebrow">Your booking portal</p>
+        <h1 id="homeTitle" tabindex="-1">Welcome</h1>
+        <p id="homeDescription"></p>
+        <div id="homeStats" class="portal-stats"></div>
+        <div id="homeActions" class="portal-grid"></div>
+        <button id="portalSignIn" class="primary-button" type="button">
+          Sign in
+        </button>
+      </section>
       <details id="demoTools" class="demo-tools" hidden>
         <summary>
           Teacher demonstration · sample accounts and walkthrough
@@ -225,6 +244,7 @@
         id="customerMode"
         class="mode-panel"
         aria-labelledby="customerTitle"
+        hidden
       >
         <div class="page-intro">
           <div>

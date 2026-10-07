@@ -690,6 +690,15 @@ def register(app):
         )
         if not user or not valid:
             fail("Invalid email or password.", 401)
+        portal = b.get("portal")
+        if portal is not None and portal not in ("customer", "admin"):
+            fail("Choose the customer or admin portal.")
+        if portal == "admin" and user["role"] != "staff":
+            fail(
+                "This is a customer account. Sign in through the Customer portal.", 403
+            )
+        if portal == "customer" and user["role"] != "customer":
+            fail("This is a staff account. Sign in through the Admin portal.", 403)
         if user["role"] == "staff":
             return jsonify(create_challenge(user))
         g.user = user
@@ -746,7 +755,9 @@ def register(app):
     def reset_request():
         app.rate_limit()
         email = core().identity(body().get("email"))
-        user = db().execute("SELECT id FROM users WHERE email=?", (email,)).fetchone()
+        user = (
+            db().execute("SELECT id,role FROM users WHERE email=?", (email,)).fetchone()
+        )
         if user:
             token = secrets.token_urlsafe(32)
             db().execute("DELETE FROM resets WHERE user_id=?", (user[0],))
@@ -762,7 +773,7 @@ def register(app):
                 user[0],
                 None,
                 "Password recovery",
-                f"Use this one-time link within 15 minutes: /?reset={token}",
+                f"Use this one-time link within 15 minutes: /{'admin' if user['role'] == 'staff' else 'customer'}?reset={token}",
             )
             log("password_reset_requested", "account", "Recovery queued")
             db().commit()

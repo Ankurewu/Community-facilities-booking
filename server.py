@@ -311,6 +311,15 @@ def create_app(config=None):
 
     @app.get("/")
     def index():
+        if request.query_string:
+            from flask import redirect
+
+            return redirect("/customer?" + request.query_string.decode("utf-8"))
+        return send_from_directory(ROOT / "dist", "portals.html")
+
+    @app.get("/customer")
+    @app.get("/admin")
+    def portal():
         return send_from_directory(ROOT / "dist", "index.html")
 
     @app.get("/<path:filename>")

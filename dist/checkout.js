@@ -27,7 +27,7 @@ function render(p) {
     $("#checkoutNotice").textContent =
       "Demonstration payment recorded. Your booking portal is the authoritative status source.";
     const link = document.createElement("a");
-    link.href = "/?paid=1";
+    link.href = "/customer?paid=1";
     link.className = "primary-button";
     link.textContent = "Return to My bookings";
     $("#checkoutLinks").replaceChildren(link);

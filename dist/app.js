@@ -2,6 +2,7 @@
 const $ = (s, r = document) => r.querySelector(s),
   $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const state = {
+  portal: location.pathname === "/admin" ? "admin" : "customer",
   user: null,
   csrf: "",
   demo: false,
@@ -19,6 +20,7 @@ const state = {
   today: "",
 };
 const modes = [
+  "home",
   "customer",
   "bookings",
   "staff",
@@ -169,10 +171,12 @@ function formHTML(content, submit = "Save") {
   return `<form class="dialog-form">${content}<button type="submit" class="primary-button">${esc(submit)}</button></form>`;
 }
 function openAuth(mode = "login") {
+  if (state.portal === "admin" && mode === "register") mode = "login";
   state.auth = mode;
   state.challenge = null;
   $("#authTitle").textContent = {
-    login: "Welcome back",
+    login:
+      state.portal === "admin" ? "Admin & staff sign in" : "Customer sign in",
     register: "Create your account",
     password: "Change password",
     forgot: "Recover your account",
@@ -255,12 +259,16 @@ function openAuth(mode = "login") {
     $("#" + id).classList.toggle("is-active", m === mode);
   }
   $("#passwordTab").hidden = !state.user;
+  if (state.portal === "admin") $("#registerTab").hidden = true;
   if (!$("#authDialog").open) $("#authDialog").showModal();
 }
 async function authSubmit(e) {
   e.preventDefault();
   $("#authFormError").textContent = "";
-  const values = Object.fromEntries(new FormData($("#authForm")));
+  const values = {
+    ...Object.fromEntries(new FormData($("#authForm"))),
+    portal: state.portal,
+  };
   try {
     const result = await busy($('button[type="submit"]', $("#authForm")), () =>
       state.challenge
@@ -304,22 +312,8 @@ async function authSubmit(e) {
     updateAccount();
     await loadInboxCount();
     if (can("assist")) await loadApplicants();
-    if (state.user.role === "staff") {
-      await setMode(
-        can("assess")
-          ? "staff"
-          : can("finance")
-            ? "finance"
-            : can("assist")
-              ? "customer"
-              : can("admin")
-                ? "admin"
-                : "reports",
-      );
-    } else await setMode("customer");
-    notice(
-      "Signed in. Choose a facility to start, or open My bookings for saved requests.",
-    );
+    await setMode("home");
+    notice("Signed in. Choose an action from your dashboard.");
   } catch (err) {
     $("#authFormError").textContent = err.message;
   }
@@ -329,6 +323,8 @@ function updateAccount() {
   $("#accountButton").textContent = user ? user.name : "Sign in";
   $("#logoutButton").hidden = !user;
   const access = {
+    customer: state.portal === "customer" || can("assist"),
+    bookings: state.portal === "customer" || can("assist"),
     staff: can("assess"),
     calendar: can("calendar") || can("assist"),
     finance: can("finance"),
@@ -342,6 +338,126 @@ function updateAccount() {
   }
   $("#assistedPanel").hidden = !can("assist");
   $("#restoreDraft").hidden = !user || !state.draft;
+  $("#portalSignIn").hidden = !!user;
+  $("#portalSignIn").textContent =
+    state.portal === "admin" ? "Admin & staff sign in" : "Customer sign in";
+  const customerNav = $('.site-header [data-mode="customer"]');
+  customerNav.textContent =
+    state.portal === "admin" ? "Assisted booking" : "Find a facility";
+  $('.site-header [data-mode="bookings"]').textContent =
+    state.portal === "admin" ? "Applications" : "My bookings";
+}
+async function loadHome() {
+  const admin = state.portal === "admin";
+  $("#homeEyebrow").textContent = admin
+    ? "Admin & staff portal"
+    : "Customer portal";
+  $("#homeTitle").textContent = state.user
+    ? `Welcome, ${state.user.name}`
+    : admin
+      ? "Manage community facilities"
+      : "Book a space for your community";
+  $("#homeDescription").textContent = admin
+    ? state.user
+      ? `Signed in as ${state.user.staff_role}. Choose a task below.`
+      : "Sign in with a staff account to review applications and manage facility operations."
+    : "Find a suitable facility, submit a booking request, and track everything from approval to payment.";
+  const links = admin
+    ? [
+        [
+          "staff",
+          "Assessment",
+          "Review applications, verify evidence and record decisions.",
+          "assess",
+        ],
+        [
+          "customer",
+          "Assisted booking",
+          "Submit or resume an application on behalf of a customer.",
+          "assist",
+        ],
+        [
+          "calendar",
+          "Calendar & closures",
+          "Check reservations and manage facility availability.",
+          "calendar",
+        ],
+        [
+          "finance",
+          "Finance",
+          "Manage waivers, refunds and payment reconciliation.",
+          "finance",
+        ],
+        [
+          "reports",
+          "Reports",
+          "Explore demand, utilisation and service performance.",
+          "reports",
+        ],
+        [
+          "admin",
+          "Administration",
+          "Configure facilities, rates, equipment and staff access.",
+          "admin",
+        ],
+        [
+          "audit",
+          "Audit",
+          "Inspect activity, decisions and audit integrity.",
+          "audit",
+        ],
+        [
+          "notifications",
+          "Inbox & delivery",
+          "Read messages and check delivery outcomes.",
+          "messages",
+        ],
+      ].filter(
+        (entry) => can(entry[3]) || (entry[0] === "calendar" && can("assist")),
+      )
+    : [
+        [
+          "customer",
+          "Find a facility",
+          "Compare facilities, dates, accessibility and prices.",
+        ],
+        [
+          "bookings",
+          "My bookings",
+          "Track requests, upload evidence, amend, pay or cancel.",
+        ],
+        [
+          "notifications",
+          "My inbox",
+          "Read decisions, payment requests and booking updates.",
+        ],
+      ];
+  $("#homeActions").innerHTML = links
+    .map(
+      ([mode, title, description]) =>
+        `<button class="portal-card" type="button" data-open-mode="${mode}"><h2>${title}</h2><p>${description}</p><span>Open ${title.toLowerCase()} →</span></button>`,
+    )
+    .join("");
+  $("#homeStats").replaceChildren();
+  if (state.user) {
+    const result = await api("/bookings");
+    const bookings = result.bookings;
+    const metrics = [
+      ["Applications", bookings.length],
+      [
+        "Awaiting review",
+        bookings.filter((b) => ["pending", "needs_info"].includes(b.status))
+          .length,
+      ],
+      ["Approved", bookings.filter((b) => b.status === "approved").length],
+    ];
+    $("#homeStats").innerHTML = metrics
+      .map(
+        ([label, count]) =>
+          `<div class="portal-stat"><strong>${count}</strong><span>${label}</span></div>`,
+      )
+      .join("");
+  }
 }
 async function signOut() {
   await api("/auth/logout", "POST", {});
@@ -354,12 +470,30 @@ async function signOut() {
   $("#requestForm").reset();
   $("#bookingConfirmation").innerHTML = "";
   updateAccount();
-  await setMode("customer");
+  await setMode("home");
   showStep(1);
   notice("Signed out.");
 }
 async function setMode(mode) {
-  if (!["customer", "help"].includes(mode) && !state.user) {
+  if (
+    state.portal === "admin" &&
+    ["customer", "bookings"].includes(mode) &&
+    !can("assist")
+  )
+    return;
+  if (
+    state.portal === "customer" &&
+    ["staff", "calendar", "finance", "reports", "admin", "audit"].includes(mode)
+  )
+    return;
+  if (
+    ![
+      "home",
+      "help",
+      ...(state.portal === "customer" ? ["customer"] : []),
+    ].includes(mode) &&
+    !state.user
+  ) {
     openAuth();
     return;
   }
@@ -379,6 +513,7 @@ async function setMode(mode) {
   });
   $("#" + mode + "Title").focus({ preventScroll: true });
   notice("");
+  if (mode === "home") await loadHome();
   if (mode === "bookings" || mode === "staff") await loadBookings();
   if (mode === "notifications") await loadNotifications();
   if (mode === "calendar") await loadCalendar();
@@ -1479,9 +1614,9 @@ document.addEventListener(
       if (handler) await busy(action, () => handler(action.dataset.id));
       return;
     }
-    const mode = e.target.closest("[data-mode]");
+    const mode = e.target.closest("[data-mode], [data-open-mode]");
     if (mode) {
-      await setMode(mode.dataset.mode);
+      await setMode(mode.dataset.mode || mode.dataset.openMode);
       return;
     }
     const card = e.target.closest("[data-venue]");
@@ -1618,6 +1753,21 @@ async function init() {
     api("/venues"),
   ]);
   state.user = session.user;
+  const query = new URLSearchParams(location.search);
+  if (
+    state.user &&
+    !query.has("reset") &&
+    (state.user.role === "staff") !== (state.portal === "admin")
+  ) {
+    location.replace(
+      (state.user.role === "staff" ? "/admin" : "/customer") + location.search,
+    );
+    return;
+  }
+  document.title = `DCF-BAS · ${state.portal === "admin" ? "Admin & staff" : "Customer"} portal`;
+  document.body.dataset.portal = state.portal;
+  $("#portalLabel").textContent =
+    state.portal === "admin" ? "Admin & staff portal" : "Customer portal";
   state.demo = session.demo_mode;
   state.venues = catalog.venues;
   state.today = catalog.today;
@@ -1639,6 +1789,7 @@ async function init() {
     $("#demoTools").hidden = false;
     const demo = await api("/demo");
     $("#demoAccounts").innerHTML = demo.accounts
+      .filter((a) => (a.role === "customer") === (state.portal === "customer"))
       .map(
         (a) =>
           `<button class="secondary-button demo-role" type="button" data-email="${a.email}">${esc(a.role)}</button>`,
@@ -1652,12 +1803,13 @@ async function init() {
       }),
     );
   }
-  const query = new URLSearchParams(location.search);
+  await setMode("home");
   if (query.has("reset")) openAuth("reset");
   if (query.has("booking") && state.user)
     await openBooking(query.get("booking"));
   if (query.has("paid") && state.user) await setMode("bookings");
 }
+$("#portalSignIn").addEventListener("click", () => openAuth());
 init().catch((error) =>
   notice(
     "Could not load booking functions: " +

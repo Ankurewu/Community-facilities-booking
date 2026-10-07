@@ -20,6 +20,41 @@ class ReportTests(unittest.TestCase):
     setUp = test_app.BookingTests.setUp
     tearDown = test_app.BookingTests.tearDown
 
+    def test_portal_entry_and_legacy_links(self):
+        entry = self.app.test_client().get("/")
+        self.assertIn(b'href="/customer"', entry.data)
+        self.assertIn(b'href="/admin"', entry.data)
+        entry.close()
+        for path in ("/customer", "/admin"):
+            with self.app.test_client().get(path) as page:
+                self.assertEqual(page.status_code, 200)
+        old = self.app.test_client().get("/?paid=1")
+        self.assertEqual(old.location, "/customer?paid=1")
+
+    def test_portal_login_requires_correct_account_type(self):
+        client = self.app.test_client()
+        self.tokens[id(client)] = client.get("/api/session").json["csrf"]
+        customer = {
+            "email": "customer@example.com",
+            "password": "Long customer password!",
+        }
+        staff = {"email": "staff@example.com", "password": "Long staff password!"}
+        for credentials, portal in ((customer, "admin"), (staff, "customer")):
+            response = self.send(
+                client, "/api/auth/login", {**credentials, "portal": portal}
+            )
+            self.assertEqual(response.status_code, 403)
+            self.assertIsNone(client.get("/api/session").json["user"])
+        denied = self.send(client, "/api/auth/login", {**customer, "portal": "invalid"})
+        self.assertEqual(denied.status_code, 400)
+        verified = self.send(
+            client, "/api/auth/login", {**customer, "portal": "customer"}
+        )
+        self.assertEqual(verified.json["user"]["role"], "customer")
+        challenge = self.send(client, "/api/auth/login", {**staff, "portal": "admin"})
+        self.assertTrue(challenge.json["mfa_required"])
+        self.assertEqual(client.get("/api/session").json["user"]["role"], "customer")
+
     def role(self, role):
         email = role + "@example.com"
         with sqlite3.connect(self.database) as db:
