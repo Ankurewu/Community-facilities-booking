@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>DCF-BAS Demo Checkout</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="brand">
+        <span class="brand-mark">D</span
+        ><strong>DCF-BAS · Demo payment provider</strong>
+      </div>
+      <a class="header-link" href="/">Return to booking portal</a>
+    </header>
+    <main class="checkout-main">
+      <article class="booking-card">
+        <p class="eyebrow">Hosted checkout simulation</p>
+        <h1>Complete your demonstration payment</h1>
+        <p>
+          No bank or card information is requested. No real payment is
+          processed.
+        </p>
+        <div id="checkoutDetails"></div>
+        <form id="checkoutForm">
+          <label
+            >Test provider response<select id="paymentOutcome">
+              <option value="success">Success</option>
+              <option value="declined">Declined (retry allowed)</option>
+              <option value="timeout">
+                Authorised, then timeout (retry reconciles)
+              </option>
+            </select></label
+          ><button id="payButton" class="primary-button" type="submit">
+            Confirm demo payment
+          </button>
+        </form>
+        <p id="checkoutNotice" role="status"></p>
+        <div id="checkoutLinks"></div>
+      </article>
+    </main>
+    <script src="/checkout.js"></script>
+  </body>
+</html>

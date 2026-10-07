@@ -4,7 +4,9 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY server.py .
+COPY features.py .
 COPY dist ./dist
+COPY samples ./samples
 RUN useradd --create-home booking && mkdir /app/instance && chown booking:booking /app/instance
 USER booking
 EXPOSE 8000

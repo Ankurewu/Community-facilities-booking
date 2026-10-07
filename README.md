@@ -1,98 +1,172 @@
-# DCF-BAS · Community facilities booking
+# DCF-BAS · Final-year booking demonstration
 
-A working coursework website based on the supplied Darwin community facilities prototype. The original visual design is retained, with a Flask API and SQLite database for accounts, booking requests and staff decisions. Demonstration facilities are not connected to actual council booking systems.
+A working demonstration of the **Darwin Community Facilities Booking and Access System** described in the supplied PRT631 Group 5 report. The same connected application moves from discovery to evidence, assessment, demonstration payment, confirmation, amendments/cancellation and refunds. Data is saved in SQLite and survives restarts.
 
-## Features
+## Start on Windows — easiest way
 
-- Customer registration, sign-in, sign-out and password changes.
-- Passwords hashed with scrypt; opaque, expiring server-side sessions in HttpOnly cookies.
-- CSRF protection, sign-in rate limiting and server-enforced customer/staff permissions.
-- Facility filtering, live availability and validated dates, attendance and access periods.
-- Reservations include setup and cleanup. Concurrent overlapping requests cannot both succeed.
-- Account-bound saved drafts and restoration after signing in again.
-- Booking history, cancellation, staff information requests and customer replies.
-- Staff queue with status filters, approval, rejection and persistent decision history.
-- Responsive desktop and mobile screens, keyboard-accessible forms and dialogs.
+1. Stop the previous website: press **Ctrl+C** in its command window.
+2. Download the newest ZIP from GitHub and **Extract All**. Open the folder containing `server.py`, `features.py` and `START_DEMO.bat`.
+3. Double-click **`START_DEMO.bat`**. Keep its window open. It creates the Python environment, installs dependencies and opens the website once the server responds.
+4. Expand **Teacher demonstration · sample accounts and walkthrough** at the top of the website.
+5. Click **customer**, then **Sign in**. Facilities and the booking journey are immediately available. There are already three sample applications in My bookings.
+6. For assessment, choose **coordinator**. Sign in, then use the prefilled local test verification code to complete the staff MFA step.
 
-## Run locally (Python 3.12+)
+If a command window reports that port 8000 is busy, stop your previous server first. If needed, open Command Prompt **inside this extracted project folder** and run:
 
-From this project folder:
+```bat
+py -m venv .venv
+.venv\Scripts\python -m pip install -r requirements.txt
+.venv\Scripts\python server.py demo --open-browser
+```
+
+Open **http://localhost:8000** if your browser does not open automatically. Do not open `index.html` directly or use a static web server: the API is required. Python 3.12+ is recommended. A missing `requirements.txt`/`server.py` error means your command window is in the wrong folder.
+
+For a different port:
+
+```bat
+.venv\Scripts\python server.py demo --port 8001 --open-browser
+```
+
+## Mac/Linux
+
+```bash
+bash start_demo.sh
+```
+
+Or manually:
 
 ```bash
 python3 -m venv .venv
 .venv/bin/python -m pip install -r requirements.txt
-.venv/bin/python server.py run
+.venv/bin/python server.py demo --open-browser
 ```
 
-Open `http://localhost:8000` in your own browser. Create a customer account using the Create account tab. A password must contain 12–128 characters. The server must run: opening the HTML directly or using a static file server will not provide login or bookings.
+## Sample roles
 
-On Windows use `py -m venv .venv`, then `.venv\Scripts\python -m pip install -r requirements.txt` and `.venv\Scripts\python server.py run`.
+The password for the **explicit local demo mode only** is `DemoBooking2026!`. Clicking a role in the demo panel prefills the email and password; it does not bypass authentication.
 
-## Create a staff account
+| Role | Email | What to demonstrate |
+| --- | --- | --- |
+| Customer | customer@demo.example | Apply, upload evidence, save/resume, reply, amend, pay, cancel, request refund, give feedback |
+| Coordinator | coordinator@demo.example | Verify evidence, start assessment, request information, approve/reject, add closures, complete events, view reports |
+| Customer Service | service@demo.example | Create/select an applicant, enter/resume the same application on their behalf, handle delivery queue |
+| Finance | finance@demo.example | Waivers, refund decisions, provider references and timeout reconciliation |
+| Administrator | admin@demo.example | Configure facilities/equipment/rates/rules, manage roles/MFA, export a private backup, audit/reports |
+| Auditor | auditor@demo.example | Read audit integrity and role-based reports; cannot assess or refund |
 
-In a second terminal:
+Staff always complete a TOTP verification step. Demo mode exposes a test code after valid password authentication so no phone setup is needed for your presentation. Normal mode instead requires an authenticator app, and shows a setup secret only after the correct password on first enrolment. A code cannot be reused: if you sign out and immediately sign back into the same staff account, wait for the next 30-second code window if verification reports an already-used code.
+
+Use **different browser profiles/incognito windows** for customer and staff so the teacher sees both views together. Otherwise sign out before switching roles. Use fictitious names, phone numbers and documents.
+
+## Working functions
+
+- Search/compare active venues, attendance, accessibility, equipment, conditions and indicative hourly fees.
+- Live availability and atomic conflict prevention for the entire setup-to-cleanup period.
+- Weekly recurring reservations (up to 12); a conflict on any occurrence blocks the entire submission.
+- Customer accounts, sign-in/out, profile correction, password changes and single-use password recovery.
+- Role-separated staff access, MFA, session expiry, CSRF, password hashing and authentication rate limiting.
+- Shared account drafts and staff-assisted applications on the applicant's own record.
+- Adaptive insurance/permit requirements, adulthood and privacy declarations, private evidence uploads and human verification.
+- Submitted/under-review/returned/approved/rejected workflow, decision reasons and approval conditions.
+- Customer replies, versioned amendments, cancellation and calendar release.
+- Hosted **demo** checkout with success, decline and authorisation-timeout paths; retries use the same provider reference.
+- Confirmation, printable receipt/PDF, calendar `.ics` download, completion and feedback.
+- In-app status inbox and persistent simulated email/SMS delivery queue, failure and retry controls.
+- Finance-approved waivers/refunds, unique refund references and reconciliation.
+- Facility closures/reopening; versioned rates, rules, equipment, accessibility and additional venues.
+- Demand/utilisation/cycle-time/channel/returns/feedback reports and CSV export.
+- Append-only, HMAC-linked audit events, authenticated backups and verified CLI restoration.
+
+Dates and event hours use **Australia/Darwin**. Bookings are allowed from tomorrow through the following 365 days; each recurrence must remain inside that window. The sample opening range is 06:00–23:59. Pending, returned and approved applications reserve their full period until cancelled/rejected. There is no automatic timed-hold expiry in this demo. Amendments retain the original reservation until approved and are rechecked transactionally. Changed applications return to assessment. A paid amendment must keep the same charge; use cancellation/refund/new application for a differently priced change.
+
+## Evidence and payments
+
+Use `samples/insurance-demo.pdf` and `samples/permit-demo.pdf`, also downloadable from the demo panel. They are explicitly fictitious documents.
+
+PDF, PNG and JPEG files up to 5 MB are accepted. Type/content checks reject mismatches, oversized files, active PDF features and the EICAR test signature. Images are decoded/verified. Document contents are encrypted with Fernet before storage and authenticated on download. Document access is restricted to the applicant, assessment staff, Customer Service and administrators. Required evidence must be manually verified before approval.
+
+The payment provider is a **separate local checkout page and simulated provider ledger**. No real money or card information is collected. Signed ledger records and a unique payment key allow retry/reconciliation after a simulated timeout. Refunds require finance permission and a reason. This is not an accredited hosted gateway or a Council finance integration.
+
+Status is authoritative in the portal. Outbox delivery outcomes are simulated, not real emails/text messages. Password recovery/assisted activation links appear in the queue; the public local demo mailbox exposes **only the six synthetic sample accounts**. For another created applicant, an authorised Customer Service officer can view the activation message in their outbox. A production messaging adapter is not configured.
+
+## Normal mode and existing accounts
+
+```bat
+.venv\Scripts\python server.py run
+```
+
+Normal mode defaults to `instance/bookings.sqlite3`; demo mode uses **a separate `instance/demo.sqlite3`**. Existing accounts/bookings are preserved by additive migrations. Public registration creates a customer account. Normal mode does not seed public demo credentials or expose demo codes/mailbox. Its payment and delivery adapters remain simulations and must be replaced before any real service use.
+
+To create your own staff account in normal mode (password prompted securely):
+
+```bat
+.venv\Scripts\python server.py create-staff --email you@example.com --name "Facility coordinator" --role coordinator
+```
+
+Allowed staff roles are `coordinator`, `service`, `finance`, `admin`, `auditor`. For an administrator use `--role admin`. The command does not overwrite/promote an existing account. First staff login enrols an authenticator. Privileged accounts can be given/revoked access in Administration; changes revoke their existing sessions. Another administrator can authorise an MFA reset.
+
+## Testing
+
+```bat
+.venv\Scripts\python -m unittest discover -s tests -v
+```
+
+Tests use temporary databases, not your demo data. They exercise the report's acceptance scenarios, concurrency, security, encrypted documents, recovery and financial state transitions.
+
+The optional real-browser acceptance script is `tests/browser.cjs`. It uses Playwright and a temporary database. If Node.js is installed:
 
 ```bash
-.venv/bin/python server.py create-staff --email teacher@example.com --name "Facility coordinator"
+npm install --no-save --package-lock=false playwright
+npx playwright install chromium
+node tests/browser.cjs
 ```
 
-Replace the example email with the intended account email. The command securely prompts for a password and its confirmation. There is no default admin password. Public registration always creates a customer; it cannot grant staff access. Existing accounts are not promoted or overwritten. Sign out of your customer account and sign in with the staff account, or use a separate browser profile.
+In the cloud workspace the script can use the preinstalled system Chromium. It exercises customer and staff screens, uploads, amendments, checkout timeouts, refunds, assistance, outbox retry, administration, reports, audit/backup and mobile reflow. Automatic checks do not replace independent WCAG/screen-reader/security acceptance.
 
-## Demonstrate to your teacher
+## Recovery
 
-1. Create a customer account and choose a facility.
-2. Pick a future date and available time; provide an event name, type and attendance.
-3. Include the event in the setup-to-cleanup period, then review and submit.
-4. Sign in as staff in a different browser profile. Choose the new request in Staff workspace.
-5. Request more information with a note. Return to the customer's My bookings and reply.
-6. Refresh the staff queue and approve the request. Refresh the customer's bookings to see approval and history.
-7. Try reserving the same facility and period: it is unavailable. Cancel as the customer to release it.
-8. Restart the server and sign in again to demonstrate persistence.
+An administrator can choose **Administration → Download private recovery backup**. This contains the database, encrypted documents and encryption key. **Keep it private; never upload it to GitHub.**
 
-All event dates and hours use Australia/Darwin. Bookings are allowed from tomorrow through the next 365 days. Pending, awaiting-information and approved requests hold their full access period. Rejected/cancelled requests release it. Applicants may cancel active future bookings; final staff decisions cannot be changed, and staff cannot approve their own requests.
+To rehearse a restore, stop the server and restore to a new path:
 
-## Share a public link
-
-This version requires a Python web host with a persistent disk. A static Netlify Drop upload cannot run its backend.
-
-One option is a Render Python web service connected to your GitHub repository:
-
-- Build command: `pip install -r requirements.txt`
-- Start command: `gunicorn --bind 0.0.0.0:$PORT --workers 2 --threads 2 'server:create_app()'`
-- Attach a persistent disk at `/var/data` (choose a plan supporting disks; this can have a cost).
-- Set `DATABASE_PATH=/var/data/bookings.sqlite3` and `COOKIE_SECURE=1`.
-- Set `TRUST_PROXY=1` only when behind the host's single trusted HTTPS reverse proxy, which must overwrite `X-Forwarded-Proto`.
-- Health-check path: `/api/venues`.
-- Run the create-staff command in the host's shell so it uses that same database. Enter the staff password at the prompt, never in Git or environment scripts.
-
-The host provides an HTTPS URL to share with your teacher. Deployment has not been performed by this project. The uploaded `.openai/hosting.json` is retained as metadata for the old static site; it does not deploy this backend.
-
-You can also use the Dockerfile on a host with persistent storage. It listens on port 8000; mount persistent storage writable by the `booking` user at `/app/instance`, or set `DATABASE_PATH` to a writable mounted path. Set secure cookies and trusted-proxy configuration when using HTTPS. The Docker image has not been built in this workspace.
-
-## Database and configuration
-
-The database defaults to `instance/bookings.sqlite3` and is excluded from Git. It contains personal account and booking data; protect it and never upload it as source. Sessions expire after eight hours. Changing a password revokes the account's other sessions. No secret signing key is needed because session tokens are random and only their SHA-256 hashes are stored in the database.
-
-Use `DATABASE_PATH` to select another persistent location. `COOKIE_SECURE=0` is the default for local HTTP only; set it to `1` for public HTTPS. IP rate limits use the immediate client address; on hosts with a shared proxy address, add host-level rate limiting as appropriate. Do not trust arbitrary forwarded client-IP headers.
-
-Back up SQLite using its backup API while the service is running, or stop the service before copying the database. Do not copy only the main database while writes are in progress: WAL files may contain current data.
-
-## Validation
-
-```bash
-.venv/bin/python -m unittest discover -s tests -v
+```bat
+.venv\Scripts\python server.py restore --file DCF-BAS-private-backup.zip --destination instance\recovery.sqlite3
+set DATABASE_PATH=%CD%\instance\recovery.sqlite3
+.venv\Scripts\python server.py run
 ```
 
-Tests cover authentication, CSRF, authorization and ownership, password hashing and session revocation, input validation, simultaneous conflicting reservations, setup/cleanup overlap, drafts, cancellation, staff decisions and database persistence. Tests use temporary databases, not your real accounts.
+Use `export DATABASE_PATH="$PWD/instance/recovery.sqlite3"` on Mac/Linux. Restoring validates SQLite integrity, foreign keys, document decryption/digests and the audit chain. It refuses to overwrite an existing database. Preserve the old database and verify users, documents, conflicts and finance references before switching over. The report's RTO/RPO targets are not established by one local restore test.
 
-## Scope
+## Public sharing and configuration
 
-This is a complete working teacher demonstration of the account and booking workflow. It does not send emails, verify email addresses, recover forgotten passwords, take payments, upload insurance documents or connect to council services. Staff decisions and replies appear inside the website; use Refresh to retrieve updates. Public production use would require those integrations as applicable, operational backups, monitoring and a security review. A forgotten password currently requires creating a new demo account; there is no email reset flow.
+To show it on your own laptop, no hosting account is needed. The localhost link works on your computer only. Public sharing requires a Python host with HTTPS and persistent storage; Netlify Drop cannot run this backend.
 
-## Files
+A Render Python service is one option (a persistent-disk plan can have a cost):
 
-- `server.py`: API, account security, database initialization and staff creation.
-- `dist/index.html`, `dist/styles.css`, `dist/app.js`: website interface.
-- `requirements.txt`: pinned Python dependencies.
-- `tests/test_app.py`: isolated API/integration tests.
-- `Dockerfile`: optional container hosting configuration.
+- Build: `pip install -r requirements.txt`
+- Start: `gunicorn --bind 0.0.0.0:$PORT --workers 2 --threads 2 'server:create_app()'`
+- Persistent disk: `/var/data`; set `DATABASE_PATH=/var/data/bookings.sqlite3`.
+- HTTPS: `COOKIE_SECURE=1`; `TRUST_PROXY=1` only behind one trusted proxy that overwrites `X-Forwarded-Proto`.
+- Health path: `/api/venues`.
+- No public deployment has been performed.
+
+`DEMO_MODE=1` deliberately exposes test MFA codes and synthetic-account messages. Do not enable it for real accounts or personal data. Only `server.py demo` seeds sample data; merely setting that variable for Gunicorn does not seed accounts. Host normal mode with individually created accounts for controlled access. The original `.openai/hosting.json` remains metadata for the old static prototype and cannot deploy this backend.
+
+SQLite contents, private backups, keys, `.env` and virtual environments are excluded from Git. Protect both the `.sqlite3` database and adjacent `.key`: loss of the key makes evidence/MFA secrets unrecoverable. Account/session/booking metadata is not encrypted at rest by this application; production needs encrypted storage and managed keys. Database snapshots contain expiring session data; protect them as credentials. The service does not use raw card numbers or security codes.
+
+## Report evidence and limits
+
+Read [Report traceability](docs/REPORT_TRACEABILITY.md), [Teacher walkthrough](docs/TEACHER_WALKTHROUGH.md), and [Validation record](docs/VALIDATION.md).
+
+This is a working coursework demonstration, not a Council deployment. Live payment/email/SMS/finance integrations, production malware scanning, encrypted cloud object storage, standard SSO, independent WCAG/penetration/privacy assessment, approved retention/disposal, externally anchored audit logging, production monitoring and availability/load/recovery certification remain outside the demo. Staff operational roles share application metadata; finance/auditor views redact event notes and evidence details. The report's targets are design goals, not achieved service metrics. Marks depend on your teacher's rubric, your explanation and verified contribution; this repository does not guarantee a grade.
+
+## Source layout
+
+- `server.py`: core HTTP/session/account setup, database access and CLI.
+- `features.py`: report-aligned workflow, evidence, MFA, payments, notifications, configuration, reporting and recovery.
+- `dist/`: responsive portal and separate demo checkout.
+- `samples/`: fictitious evidence PDFs.
+- `tests/`: isolated backend and real-browser acceptance scenarios.
+- `docs/`: traceability, presentation steps and validation evidence.
+- `START_DEMO.bat`, `start_demo.sh`: launchers.
+- `Dockerfile`: optional production-server container; not built in this workspace. It requires a writable persistent volume for the database and key.

@@ -1,190 +1,856 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Darwin Community Facilities Booking and Access System: book facilities and manage your requests.">
-  <title>DCF-BAS · Community facilities</title>
-  <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-  <a class="skip-link" href="#main">Skip to main content</a>
-  <header class="site-header">
-    <div class="brand">
-      <span class="brand-mark" aria-hidden="true">D</span>
-      <span><strong>DCF-BAS</strong><small>Community facilities booking</small></span>
-    </div>
-    <nav class="mode-tabs" aria-label="Main navigation">
-      <button class="mode-tab is-active" type="button" data-mode="customer" aria-pressed="true">Book a facility</button>
-      <button class="mode-tab" type="button" data-mode="bookings" aria-pressed="false">My bookings</button>
-      <button class="mode-tab" type="button" data-mode="staff" aria-pressed="false" hidden>Staff workspace</button>
-      <button id="accountButton" class="secondary-button" type="button">Sign in</button>
-      <button id="logoutButton" class="text-button" type="button" hidden>Sign out</button>
-    </nav>
-  </header>
-
-  <div class="prototype-banner" role="note">
-    <strong>Coursework demonstration:</strong> accounts and requests are saved. These demonstration facilities are not connected to council booking services. All event times use Darwin time.
-  </div>
-
-  <main id="main">
-    <div id="notice" class="info-callout" role="status" tabindex="-1" hidden></div>
-    <dialog id="authDialog" aria-labelledby="authTitle">
-      <div class="section-heading"><h2 id="authTitle">Welcome back</h2><button id="closeAuth" class="text-button" type="button" aria-label="Close account dialog">Close</button></div>
-      <div class="mode-tabs"><button id="loginTab" class="mode-tab is-active" type="button">Sign in</button><button id="registerTab" class="mode-tab" type="button">Create account</button><button id="passwordTab" class="mode-tab" type="button" hidden>Change password</button></div>
-      <form id="authForm">
-        <label id="nameField" hidden>Your name<input id="authName" autocomplete="name" maxlength="100"></label>
-        <label id="emailField">Email address<input id="authEmail" type="email" autocomplete="email" maxlength="254" required></label>
-        <label id="currentPasswordField" hidden>Current password<input id="currentPassword" type="password" autocomplete="current-password"></label>
-        <label id="passwordLabel">Password<input id="authPassword" type="password" autocomplete="current-password" maxlength="128" required></label>
-        <p id="passwordHelp" class="help-text" hidden>Use at least 12 characters. No shared demo password is required.</p>
-        <p id="authError" class="error-text" role="alert"></p>
-        <button id="authSubmit" class="primary-button" type="submit">Sign in</button>
-      </form>
-    </dialog>
-    <section id="customerMode" class="mode-panel" aria-labelledby="customerTitle">
-      <div class="page-intro">
-        <div>
-          <p class="eyebrow">Darwin community centres</p>
-          <h1 id="customerTitle" tabindex="-1">Find and request a facility</h1>
-          <p>Compare a venue, choose an available time and follow the same request through assessment.</p>
-        </div>
-        <button id="restoreDraft" class="text-button" type="button" hidden>Resume saved draft</button>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Darwin Community Facilities Booking and Access System: book facilities and manage your requests."
+    />
+    <title>DCF-BAS · Community facilities</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to main content</a>
+    <header class="site-header">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">D</span>
+        <span
+          ><strong>DCF-BAS</strong
+          ><small>Community facilities booking</small></span
+        >
       </div>
+      <nav class="mode-tabs" aria-label="Main navigation">
+        <button
+          class="mode-tab is-active"
+          type="button"
+          data-mode="customer"
+          aria-pressed="true"
+        >
+          Find a facility
+        </button>
+        <button
+          class="mode-tab"
+          type="button"
+          data-mode="bookings"
+          aria-pressed="false"
+        >
+          My bookings
+        </button>
+        <button
+          class="mode-tab"
+          type="button"
+          data-mode="notifications"
+          aria-pressed="false"
+          hidden
+        >
+          Inbox <span id="unreadCount"></span>
+        </button>
+        <button
+          class="mode-tab"
+          type="button"
+          data-mode="staff"
+          aria-pressed="false"
+          hidden
+        >
+          Assessment
+        </button>
+        <button
+          class="mode-tab"
+          type="button"
+          data-mode="calendar"
+          aria-pressed="false"
+          hidden
+        >
+          Calendar
+        </button>
+        <button
+          class="mode-tab"
+          type="button"
+          data-mode="finance"
+          aria-pressed="false"
+          hidden
+        >
+          Finance
+        </button>
+        <button
+          class="mode-tab"
+          type="button"
+          data-mode="reports"
+          aria-pressed="false"
+          hidden
+        >
+          Reports
+        </button>
+        <button
+          class="mode-tab"
+          type="button"
+          data-mode="admin"
+          aria-pressed="false"
+          hidden
+        >
+          Administration
+        </button>
+        <button
+          class="mode-tab"
+          type="button"
+          data-mode="audit"
+          aria-pressed="false"
+          hidden
+        >
+          Audit
+        </button>
+        <button
+          class="mode-tab"
+          type="button"
+          data-mode="help"
+          aria-pressed="false"
+        >
+          Help
+        </button>
+        <button id="accountButton" class="secondary-button" type="button">
+          Sign in</button
+        ><button id="logoutButton" class="text-button" type="button" hidden>
+          Sign out
+        </button>
+      </nav>
+    </header>
 
-      <ol class="stepper" aria-label="Booking progress">
-        <li class="is-current" data-step-indicator="1"><span>1</span>Find a facility</li>
-        <li data-step-indicator="2"><span>2</span>Choose a time</li>
-        <li data-step-indicator="3"><span>3</span>Request details</li>
-        <li data-step-indicator="4"><span>4</span>Review</li>
-        <li data-step-indicator="5"><span>5</span>Track status</li>
-      </ol>
+    <div class="prototype-banner" role="note">
+      <strong>Coursework demonstration:</strong> a complete connected booking
+      journey. Payments and message delivery are simulated; no money is charged.
+      Facilities, fees and rules are sample configuration. All event times use
+      Darwin time.
+    </div>
 
-      <div id="liveRegion" class="sr-only" aria-live="polite"></div>
-
-      <section class="journey-step is-active" data-step="1" aria-labelledby="step1Title">
+    <main id="main">
+      <details id="demoTools" class="demo-tools" hidden>
+        <summary>
+          Teacher demonstration · sample accounts and walkthrough
+        </summary>
+        <p>
+          Use fictitious data only. Choose a role to sign in; staff still
+          complete a second verification step. Password:
+          <strong>DemoBooking2026!</strong>
+        </p>
+        <div id="demoAccounts" class="action-row"></div>
+        <p>
+          <button id="demoMailbox" class="text-button" type="button">
+            Open local demo mailbox
+          </button>
+          ·
+          <a href="/demo-file/insurance-demo.pdf" download
+            >Sample insurance PDF</a
+          >
+          · <a href="/demo-file/permit-demo.pdf" download>Sample permit PDF</a>
+        </p>
+      </details>
+      <div
+        id="notice"
+        class="info-callout"
+        role="status"
+        tabindex="-1"
+        hidden
+      ></div>
+      <dialog id="authDialog" aria-labelledby="authTitle">
         <div class="section-heading">
-          <div><p class="step-label">Step 1 of 5</p><h2 id="step1Title" tabindex="-1">What does your event need?</h2></div>
-          <span class="required-key"><span aria-hidden="true">*</span> Required</span>
+          <h2 id="authTitle">Welcome back</h2>
+          <button
+            id="closeAuth"
+            class="text-button"
+            type="button"
+            aria-label="Close account dialog"
+          >
+            Close
+          </button>
         </div>
-        <div class="filter-grid">
-          <label>Expected attendance <span aria-hidden="true">*</span>
-            <input id="attendanceFilter" type="number" min="1" max="120" value="60" inputmode="numeric">
-          </label>
-          <label>Accessibility need
-            <select id="accessFilter">
-              <option value="any">Show all facilities</option>
-              <option value="stepfree">Step-free entry</option>
-              <option value="hearing">Hearing support</option>
-              <option value="parking">Accessible parking</option>
-            </select>
-          </label>
+        <div class="mode-tabs">
+          <button id="loginTab" class="mode-tab is-active" type="button">
+            Sign in</button
+          ><button id="registerTab" class="mode-tab" type="button">
+            Create account</button
+          ><button id="forgotTab" class="mode-tab" type="button">
+            Forgot password</button
+          ><button id="passwordTab" class="mode-tab" type="button" hidden>
+            Change password
+          </button>
         </div>
-        <div id="venueList" class="venue-grid" aria-label="Available community centres"></div>
-        <div class="action-row action-row-end">
-          <button class="primary-button" type="button" data-next="2">Continue with selected facility</button>
-        </div>
-      </section>
-
-      <section class="journey-step" data-step="2" aria-labelledby="step2Title" hidden>
+        <form id="authForm">
+          <label id="nameField" hidden
+            >Your name<input id="authName" autocomplete="name" maxlength="100"
+          /></label>
+          <label id="emailField"
+            >Email address<input
+              id="authEmail"
+              type="email"
+              autocomplete="email"
+              maxlength="254"
+              required
+          /></label>
+          <label id="currentPasswordField" hidden
+            >Current password<input
+              id="currentPassword"
+              type="password"
+              autocomplete="current-password"
+          /></label>
+          <label id="passwordLabel"
+            >Password<input
+              id="authPassword"
+              type="password"
+              autocomplete="current-password"
+              maxlength="128"
+              required
+          /></label>
+          <p id="passwordHelp" class="help-text" hidden>
+            Use at least 12 characters. For personal demo accounts, use 12–128
+            characters.
+          </p>
+          <p id="authError" class="error-text" role="alert"></p>
+          <button id="authSubmit" class="primary-button" type="submit">
+            Sign in
+          </button>
+        </form>
+      </dialog>
+      <dialog id="workDialog" aria-labelledby="workTitle">
         <div class="section-heading">
-          <div><p class="step-label">Step 2 of 5</p><h2 id="step2Title" tabindex="-1">Choose a date and time</h2></div>
-          <button class="text-button" type="button" data-back="1">Change facility</button>
+          <h2 id="workTitle"></h2>
+          <button id="closeWork" type="button" class="text-button">
+            Close
+          </button>
         </div>
-        <div class="summary-strip"><span>Selected facility</span><strong id="selectedVenueName">Nightcliff Community Centre</strong></div>
-        <div class="two-column">
-          <div class="field-card">
-            <label for="eventDate">Event date <span aria-hidden="true">*</span></label>
-            <input id="eventDate" type="date">
-            <p class="help-text">Availability updates from saved requests. Pending requests reserve their period.</p>
+        <div id="workContent"></div>
+        <p id="workError" class="error-text" role="alert"></p>
+      </dialog>
+      <section
+        id="customerMode"
+        class="mode-panel"
+        aria-labelledby="customerTitle"
+      >
+        <div class="page-intro">
+          <div>
+            <p class="eyebrow">Darwin community centres</p>
+            <h1 id="customerTitle" tabindex="-1">
+              Find and request a facility
+            </h1>
+            <p>
+              Discover an accessible space, submit your application, and follow
+              assessment, payment and confirmation in one place.
+            </p>
           </div>
-          <div class="field-card">
-            <fieldset>
-              <legend>Available times <span aria-hidden="true">*</span></legend>
-              <div id="slotList" class="slot-list" aria-live="polite"></div>
-            </fieldset>
+          <button id="restoreDraft" class="text-button" type="button" hidden>
+            Resume saved draft
+          </button>
+        </div>
+
+        <div id="assistedPanel" class="info-callout" hidden>
+          <label
+            >Staff-assisted application · applicant<select
+              id="assistedApplicant"
+            >
+              <option value="">My own request</option>
+            </select></label
+          >
+          <div class="action-row">
+            <button id="createApplicant" type="button" class="secondary-button">
+              Add an assisted applicant</button
+            ><span id="assistedSummary"
+              >The same form, record and calendar rules apply.</span
+            >
           </div>
         </div>
-        <div class="info-callout"><strong>Include setup and cleaning time.</strong> Your requested period must cover access, setup, the event and cleanup.</div>
-        <div class="action-row"><button class="secondary-button" type="button" data-back="1">Back</button><button class="primary-button" type="button" data-next="3">Continue</button></div>
-      </section>
+        <ol class="stepper" aria-label="Booking progress">
+          <li class="is-current" data-step-indicator="1">
+            <span>1</span>Find a facility
+          </li>
+          <li data-step-indicator="2"><span>2</span>Choose a time</li>
+          <li data-step-indicator="3"><span>3</span>Request details</li>
+          <li data-step-indicator="4"><span>4</span>Review</li>
+          <li data-step-indicator="5"><span>5</span>Track status</li>
+        </ol>
 
-      <section class="journey-step" data-step="3" aria-labelledby="step3Title" hidden>
-        <div class="section-heading">
-          <div><p class="step-label">Step 3 of 5</p><h2 id="step3Title" tabindex="-1">Tell us about the request</h2></div>
-          <span class="save-state" id="saveState">Not saved</span>
-        </div>
-        <form id="requestForm" novalidate>
-          <div class="form-grid">
-            <label class="span-2">Event name <span aria-hidden="true">*</span>
-              <input id="eventName" name="eventName" autocomplete="off" required placeholder="Example: Community information evening">
-              <span class="error-text" id="eventNameError"></span>
+        <div id="liveRegion" class="sr-only" aria-live="polite"></div>
+
+        <section
+          class="journey-step is-active"
+          data-step="1"
+          aria-labelledby="step1Title"
+        >
+          <div class="section-heading">
+            <div>
+              <p class="step-label">Step 1 of 5</p>
+              <h2 id="step1Title" tabindex="-1">What does your event need?</h2>
+            </div>
+            <span class="required-key"
+              ><span aria-hidden="true">*</span> Required</span
+            >
+          </div>
+          <div class="filter-grid">
+            <label
+              >Search facilities<input
+                id="searchFilter"
+                type="search"
+                placeholder="Name, equipment or access feature" /></label
+            ><label
+              >Equipment<select id="equipmentFilter">
+                <option value="any">Any equipment</option>
+                <option>Projector</option>
+                <option>Kitchenette</option>
+                <option>Whiteboard</option>
+                <option>Tables and chairs</option>
+              </select></label
+            >
+            <label
+              >Expected attendance <span aria-hidden="true">*</span>
+              <input
+                id="attendanceFilter"
+                type="number"
+                min="1"
+                max="120"
+                value="60"
+                inputmode="numeric"
+              />
             </label>
-            <label>Event type <span aria-hidden="true">*</span>
-              <select id="eventType" name="eventType" required>
-                <option value="">Select an event type</option>
-                <option>Community meeting</option>
-                <option>Workshop or class</option>
-                <option>Private celebration</option>
-                <option>Not-for-profit activity</option>
+            <label
+              >Accessibility need
+              <select id="accessFilter">
+                <option value="any">Show all facilities</option>
+                <option value="stepfree">Step-free entry</option>
+                <option value="hearing">Hearing support</option>
+                <option value="parking">Accessible parking</option>
               </select>
             </label>
-            <label>Expected attendance <span aria-hidden="true">*</span>
-              <input id="attendance" name="attendance" type="number" min="1" max="120" required value="60">
-            </label>
-            <label>Setup starts <span aria-hidden="true">*</span>
-              <input id="setupTime" name="setupTime" type="time" required>
-              <span class="error-text" id="setupTimeError"></span>
-            </label>
-            <label>Cleanup finishes <span aria-hidden="true">*</span>
-              <input id="cleanupTime" name="cleanupTime" type="time" required>
-            </label>
-            <fieldset class="span-2 option-fieldset">
-              <legend>Will alcohol be available?</legend>
-              <label><input type="radio" name="alcohol" value="No" checked> No</label>
-              <label><input type="radio" name="alcohol" value="Yes"> Yes</label>
-            </fieldset>
-            <label class="span-2">Access needs or additional notes
-              <textarea id="bookingNotes" maxlength="2000" rows="3" placeholder="Tell staff about accessibility needs or your event"></textarea>
-              <small>Staff can request more information through your booking history.</small>
-            </label>
           </div>
-        </form>
-        <div class="action-row"><button class="secondary-button" type="button" data-back="2">Back</button><div><button id="saveDraft" class="text-button" type="button">Save draft</button><button class="primary-button" type="button" data-next="4">Review request</button></div></div>
+          <p class="help-text">
+            Indicative rates are coursework assumptions, not Council quotations.
+            Select a venue card to compare equipment, rules and fees.
+          </p>
+          <div
+            id="venueList"
+            class="venue-grid"
+            aria-label="Available community centres"
+          ></div>
+          <div class="action-row action-row-end">
+            <button class="primary-button" type="button" data-next="2">
+              Continue with selected facility
+            </button>
+          </div>
+        </section>
+
+        <section
+          class="journey-step"
+          data-step="2"
+          aria-labelledby="step2Title"
+          hidden
+        >
+          <div class="section-heading">
+            <div>
+              <p class="step-label">Step 2 of 5</p>
+              <h2 id="step2Title" tabindex="-1">Choose a date and time</h2>
+            </div>
+            <button class="text-button" type="button" data-back="1">
+              Change facility
+            </button>
+          </div>
+          <div class="summary-strip">
+            <span>Selected facility</span
+            ><strong id="selectedVenueName">Nightcliff Community Centre</strong>
+          </div>
+          <div class="two-column">
+            <div class="field-card">
+              <label for="eventDate"
+                >Event date <span aria-hidden="true">*</span></label
+              >
+              <input id="eventDate" type="date" required /><label
+                >Repeat weekly<select id="repeatCount">
+                  <option value="1">One occurrence</option>
+                  <option value="2">2 weekly occurrences</option>
+                  <option value="3">3 weekly occurrences</option>
+                  <option value="4">4 weekly occurrences</option>
+                  <option value="5">5 weekly occurrences</option>
+                  <option value="6">6 weekly occurrences</option>
+                  <option value="7">7 weekly occurrences</option>
+                  <option value="8">8 weekly occurrences</option>
+                  <option value="9">9 weekly occurrences</option>
+                  <option value="10">10 weekly occurrences</option>
+                  <option value="11">11 weekly occurrences</option>
+                  <option value="12">12 weekly occurrences</option>
+                </select></label
+              >
+              <p class="help-text">
+                Availability updates from saved requests. Pending requests
+                reserve their period.
+              </p>
+            </div>
+            <div class="field-card">
+              <fieldset>
+                <legend>
+                  Available times <span aria-hidden="true">*</span>
+                </legend>
+                <div id="slotList" class="slot-list" aria-live="polite"></div>
+              </fieldset>
+            </div>
+          </div>
+          <div class="info-callout">
+            <strong>Include setup and cleaning time.</strong> Your requested
+            period must cover access, setup, the event and cleanup.
+          </div>
+          <div class="action-row">
+            <button class="secondary-button" type="button" data-back="1">
+              Back</button
+            ><button class="primary-button" type="button" data-next="3">
+              Continue
+            </button>
+          </div>
+        </section>
+
+        <section
+          class="journey-step"
+          data-step="3"
+          aria-labelledby="step3Title"
+          hidden
+        >
+          <div class="section-heading">
+            <div>
+              <p class="step-label">Step 3 of 5</p>
+              <h2 id="step3Title" tabindex="-1">Tell us about the request</h2>
+            </div>
+            <span class="save-state" id="saveState">Not saved</span>
+          </div>
+          <form id="requestForm" novalidate>
+            <div class="form-grid">
+              <label class="span-2"
+                >Event name <span aria-hidden="true">*</span>
+                <input
+                  id="eventName"
+                  name="eventName"
+                  autocomplete="off"
+                  required
+                  placeholder="Example: Community information evening"
+                />
+                <span class="error-text" id="eventNameError"></span>
+              </label>
+              <label
+                >Event type <span aria-hidden="true">*</span>
+                <select id="eventType" name="eventType" required>
+                  <option value="">Select an event type</option>
+                  <option>Community meeting</option>
+                  <option>Workshop or class</option>
+                  <option>Private celebration</option>
+                  <option>Not-for-profit activity</option>
+                </select>
+              </label>
+              <label
+                >Expected attendance <span aria-hidden="true">*</span>
+                <input
+                  id="attendance"
+                  name="attendance"
+                  type="number"
+                  min="1"
+                  max="120"
+                  required
+                  value="60"
+                />
+              </label>
+              <label
+                >Setup starts <span aria-hidden="true">*</span>
+                <input id="setupTime" name="setupTime" type="time" required />
+                <span class="error-text" id="setupTimeError"></span>
+              </label>
+              <label
+                >Cleanup finishes <span aria-hidden="true">*</span>
+                <input
+                  id="cleanupTime"
+                  name="cleanupTime"
+                  type="time"
+                  required
+                />
+              </label>
+              <fieldset class="span-2 option-fieldset">
+                <legend>Will alcohol be available?</legend>
+                <label
+                  ><input type="radio" name="alcohol" value="No" checked />
+                  No</label
+                >
+                <label
+                  ><input type="radio" name="alcohol" value="Yes" /> Yes</label
+                >
+              </fieldset>
+              <label class="confirmation-check span-2"
+                ><input id="adultCheck" type="checkbox" required /><span
+                  >I am the responsible hirer, aged 18 or over (or staff have
+                  confirmed this with the applicant).</span
+                ></label
+              >
+              <section
+                id="evidencePanel"
+                class="field-card span-2"
+                aria-labelledby="evidenceTitle"
+              >
+                <h3 id="evidenceTitle">Evidence and permits</h3>
+                <p id="evidenceRequirements" class="help-text"></p>
+                <div class="form-grid">
+                  <label
+                    >Evidence category<select id="evidenceKind">
+                      <option value="insurance">
+                        Public liability insurance
+                      </option>
+                      <option value="permit">Alcohol permit</option>
+                      <option value="other">Other supporting evidence</option>
+                    </select></label
+                  ><label
+                    >Document (PDF, PNG or JPEG, up to 5 MB)<input
+                      id="evidenceFile"
+                      type="file"
+                      accept=".pdf,.png,.jpg,.jpeg"
+                  /></label>
+                </div>
+                <button
+                  id="uploadEvidence"
+                  type="button"
+                  class="secondary-button"
+                >
+                  Upload evidence
+                </button>
+                <div id="uploadedDocuments"></div>
+                <p class="help-text">
+                  Downloads are authenticated; document contents are encrypted.
+                  Automated checks reject invalid file types, active PDF content
+                  and the EICAR test signature. This is not a production
+                  malware-scanning service.
+                </p>
+              </section>
+              <label class="confirmation-check span-2"
+                ><input id="privacyCheck" type="checkbox" required /><span
+                  >I accept the
+                  <button id="privacyInfo" class="text-button" type="button">
+                    privacy notice</button
+                  >: details are used for assessing this demonstration
+                  application.</span
+                ></label
+              >
+              <label class="span-2"
+                >Access needs or additional notes
+                <textarea
+                  id="bookingNotes"
+                  maxlength="2000"
+                  rows="3"
+                  placeholder="Tell staff about accessibility needs or your event"
+                ></textarea>
+                <small
+                  >Staff can request more information through your booking
+                  history.</small
+                >
+              </label>
+            </div>
+          </form>
+          <div id="feeEstimate" class="summary-strip"></div>
+          <div class="action-row">
+            <button class="secondary-button" type="button" data-back="2">
+              Back
+            </button>
+            <div>
+              <button id="saveDraft" class="text-button" type="button">
+                Save draft</button
+              ><button class="primary-button" type="button" data-next="4">
+                Review request
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <section
+          class="journey-step"
+          data-step="4"
+          aria-labelledby="step4Title"
+          hidden
+        >
+          <div class="section-heading">
+            <div>
+              <p class="step-label">Step 4 of 5</p>
+              <h2 id="step4Title" tabindex="-1">Review before submitting</h2>
+            </div>
+          </div>
+          <div id="reviewCard" class="review-card"></div>
+          <label class="confirmation-check"
+            ><input id="declaration" type="checkbox" />
+            <span
+              >I confirm that the request details are correct and I understand
+              that submission does not guarantee approval.</span
+            ></label
+          >
+          <div class="action-row">
+            <button class="secondary-button" type="button" data-back="3">
+              Edit details</button
+            ><button id="submitRequest" class="primary-button" type="button">
+              Submit request
+            </button>
+          </div>
+        </section>
+
+        <section
+          class="journey-step"
+          data-step="5"
+          aria-labelledby="step5Title"
+          hidden
+        >
+          <div class="success-panel">
+            <div class="success-icon" aria-hidden="true">✓</div>
+            <h2 id="step5Title" tabindex="-1">Request saved</h2>
+            <p>
+              Your request is waiting for staff review. Check My bookings for
+              decisions and messages.
+            </p>
+          </div>
+          <div id="bookingConfirmation"></div>
+          <div class="action-row">
+            <button id="restartJourney" class="secondary-button" type="button">
+              Book another facility</button
+            ><button id="viewBookings" class="primary-button" type="button">
+              My bookings
+            </button>
+          </div>
+        </section>
       </section>
 
-      <section class="journey-step" data-step="4" aria-labelledby="step4Title" hidden>
-        <div class="section-heading"><div><p class="step-label">Step 4 of 5</p><h2 id="step4Title" tabindex="-1">Review before submitting</h2></div></div>
-        <div id="reviewCard" class="review-card"></div>
-        <label class="confirmation-check"><input id="declaration" type="checkbox"> <span>I confirm that the request details are correct and I understand that submission does not guarantee approval.</span></label>
-        <div class="action-row"><button class="secondary-button" type="button" data-back="3">Edit details</button><button id="submitRequest" class="primary-button" type="button">Submit request</button></div>
+      <section
+        id="bookingsMode"
+        class="mode-panel"
+        aria-labelledby="bookingsTitle"
+        hidden
+      >
+        <div class="page-intro">
+          <div>
+            <p class="eyebrow">Your account</p>
+            <h1 id="bookingsTitle" tabindex="-1">My bookings</h1>
+            <p>
+              Track requests, read staff messages, respond to questions or
+              cancel a reservation.
+            </p>
+          </div>
+          <button id="refreshBookings" class="secondary-button" type="button">
+            Refresh
+          </button>
+        </div>
+        <div id="myBookingList" class="booking-list"></div>
       </section>
-
-      <section class="journey-step" data-step="5" aria-labelledby="step5Title" hidden>
-        <div class="success-panel"><div class="success-icon" aria-hidden="true">✓</div><h2 id="step5Title" tabindex="-1">Request saved</h2><p>Your request is waiting for staff review. Check My bookings for decisions and messages.</p></div>
-        <div id="bookingConfirmation"></div>
-        <div class="action-row"><button id="restartJourney" class="secondary-button" type="button">Book another facility</button><button id="viewBookings" class="primary-button" type="button">My bookings</button></div>
+      <section
+        id="staffMode"
+        class="mode-panel"
+        aria-labelledby="staffTitle"
+        hidden
+      >
+        <div class="page-intro staff-intro">
+          <div>
+            <p class="eyebrow">Facility coordinator</p>
+            <h1 id="staffTitle" tabindex="-1">Application assessment queue</h1>
+            <p>
+              Review requests and record a decision with a reason. Applicants
+              see every update.
+            </p>
+          </div>
+          <button id="refreshStaff" class="secondary-button" type="button">
+            Refresh queue
+          </button>
+        </div>
+        <div class="staff-layout">
+          <aside class="queue-panel" aria-labelledby="queueTitle">
+            <div class="panel-heading">
+              <h2 id="queueTitle">Work queue</h2>
+              <span id="queueCount"></span>
+            </div>
+            <label
+              >Filter by status<select id="staffFilter">
+                <option value="all">All requests</option>
+                <option value="pending">Waiting for review</option>
+                <option value="needs_info">Awaiting information</option>
+                <option value="approved">Approved</option>
+                <option value="rejected">Rejected</option>
+                <option value="cancelled">Cancelled</option>
+              </select></label
+            >
+            <div id="staffQueue"></div>
+          </aside>
+          <section
+            id="staffCase"
+            class="case-panel"
+            aria-label="Selected request"
+          >
+            <p>Select a request from the queue.</p>
+          </section>
+        </div>
       </section>
-    </section>
+      <section id="notificationsMode" class="mode-panel" hidden>
+        <div class="page-intro">
+          <div>
+            <p class="eyebrow">Authoritative portal updates</p>
+            <h1 id="notificationsTitle" tabindex="-1">
+              Messages and notifications
+            </h1>
+            <p>
+              Read decisions and evidence requests here. Email delivery uses a
+              durable local simulator.
+            </p>
+          </div>
+          <button class="secondary-button" data-refresh="notifications">
+            Refresh
+          </button>
+        </div>
+        <div id="notificationList"></div>
+        <div id="outboxPanel"></div>
+      </section>
+      <section id="calendarMode" class="mode-panel" hidden>
+        <div class="page-intro">
+          <div>
+            <p class="eyebrow">Single facility calendar</p>
+            <h1 id="calendarTitle" tabindex="-1">Reservations and closures</h1>
+          </div>
+          <button class="secondary-button" data-refresh="calendar">
+            Refresh
+          </button>
+        </div>
+        <div id="calendarContent"></div>
+      </section>
+      <section id="financeMode" class="mode-panel" hidden>
+        <div class="page-intro">
+          <div>
+            <p class="eyebrow">Finance controls</p>
+            <h1 id="financeTitle" tabindex="-1">
+              Charges, refunds and reconciliation
+            </h1>
+            <p>
+              Demonstration references only. No card information is collected.
+            </p>
+          </div>
+          <button class="secondary-button" data-refresh="finance">
+            Refresh
+          </button>
+        </div>
+        <div id="financeContent"></div>
+      </section>
+      <section id="reportsMode" class="mode-panel" hidden>
+        <div class="page-intro">
+          <div>
+            <p class="eyebrow">Evidence for service improvement</p>
+            <h1 id="reportsTitle" tabindex="-1">Demand and utilisation</h1>
+          </div>
+        </div>
+        <div id="reportContent"></div>
+      </section>
+      <section id="adminMode" class="mode-panel" hidden>
+        <div class="page-intro">
+          <div>
+            <p class="eyebrow">Versioned configuration</p>
+            <h1 id="adminTitle" tabindex="-1">Facilities, rules and access</h1>
+          </div>
+        </div>
+        <div id="adminContent"></div>
+      </section>
+      <section id="auditMode" class="mode-panel" hidden>
+        <div class="page-intro">
+          <div>
+            <p class="eyebrow">Protected decision history</p>
+            <h1 id="auditTitle" tabindex="-1">Audit and integrity</h1>
+          </div>
+          <button class="secondary-button" data-refresh="audit">
+            Verify and refresh
+          </button>
+        </div>
+        <div id="auditContent"></div>
+      </section>
+      <section id="helpMode" class="mode-panel" hidden>
+        <div class="page-intro">
+          <div>
+            <p class="eyebrow">Guidance and coursework scope</p>
+            <h1 id="helpTitle" tabindex="-1">How booking works</h1>
+            <p>
+              Find a space → apply → staff assessment → demo payment →
+              confirmation.
+            </p>
+          </div>
+        </div>
+        <div class="help-grid">
+          <article class="booking-card">
+            <h2>Customer journey</h2>
+            <ol>
+              <li>
+                Select a facility and a future time, including setup and
+                cleanup.
+              </li>
+              <li>
+                Enter event details, confirm age and privacy, and upload
+                required evidence.
+              </li>
+              <li>
+                Review your request. Sign in before submitting or saving a
+                draft.
+              </li>
+              <li>
+                Open My bookings for staff questions, replies and amendment
+                requests.
+              </li>
+              <li>
+                After approval, use the demo checkout. Download your receipt and
+                calendar file.
+              </li>
+            </ol>
+            <button class="primary-button" data-mode="customer">
+              Start a booking
+            </button>
+          </article>
+          <article class="booking-card">
+            <h2>Staff roles</h2>
+            <p>
+              Coordinators assess evidence and decide applications. Customer
+              Service enters applications on behalf of a hirer. Finance
+              authorises waivers/refunds and reconciles provider references.
+              Administrators configure facilities and access. Auditors review
+              integrity and reports.
+            </p>
+            <p>
+              Staff verify a second authentication factor. Demo mode shows a
+              test code; normal mode uses your authenticator app.
+            </p>
+          </article>
+          <article class="booking-card">
+            <h2>Privacy and assistance</h2>
+            <p>
+              Use invented names and documents in this coursework system.
+              Accounts, contact details, application records and evidence are
+              retained in your local database until the operator disposes of it.
+              Customer Service can enter the same record for a caller. Use your
+              profile to correct contact details.
+            </p>
+            <p>
+              Use Tab to navigate, Enter/Space to activate controls, and Escape
+              to close dialogs. All event times are in Australia/Darwin. Status
+              is always shown as text.
+            </p>
+          </article>
+          <article class="booking-card">
+            <h2>What is simulated?</h2>
+            <p>
+              The gateway authorises demo transactions and creates references,
+              but never charges money. Email/SMS delivery, insurance
+              authenticity and Council/finance connections are not external
+              integrations. The report’s performance, availability, recovery and
+              WCAG targets still require independent evidence; this
+              demonstration does not establish those production certifications.
+            </p>
+            <p>
+              Refunds and amendments require staff approval. Evidence
+              verification is a human decision. Rates, capacities, equipment and
+              rules are example configuration.
+            </p>
+          </article>
+        </div>
+      </section>
+    </main>
 
-    <section id="bookingsMode" class="mode-panel" aria-labelledby="bookingsTitle" hidden>
-      <div class="page-intro"><div><p class="eyebrow">Your account</p><h1 id="bookingsTitle" tabindex="-1">My bookings</h1><p>Track requests, read staff messages, respond to questions or cancel a reservation.</p></div><button id="refreshBookings" class="secondary-button" type="button">Refresh</button></div>
-      <div id="myBookingList" class="booking-list"></div>
-    </section>
-    <section id="staffMode" class="mode-panel" aria-labelledby="staffTitle" hidden>
-      <div class="page-intro staff-intro"><div><p class="eyebrow">Facility coordinator</p><h1 id="staffTitle" tabindex="-1">Application assessment queue</h1><p>Review requests and record a decision with a reason. Applicants see every update.</p></div><button id="refreshStaff" class="secondary-button" type="button">Refresh queue</button></div>
-      <div class="staff-layout">
-        <aside class="queue-panel" aria-labelledby="queueTitle"><div class="panel-heading"><h2 id="queueTitle">Work queue</h2><span id="queueCount"></span></div><label>Filter by status<select id="staffFilter"><option value="all">All requests</option><option value="pending">Waiting for review</option><option value="needs_info">Awaiting information</option><option value="approved">Approved</option><option value="rejected">Rejected</option><option value="cancelled">Cancelled</option></select></label><div id="staffQueue"></div></aside>
-        <section id="staffCase" class="case-panel" aria-label="Selected request"><p>Select a request from the queue.</p></section>
-      </div>
-    </section>
-  </main>
+    <footer>
+      <span>DCF-BAS · Coursework booking system</span>
+      <span>Ankur Das (s389147) · Kazi Azmain Tazwar (S390870)</span>
+    </footer>
 
-  <footer>
-    <span>DCF-BAS · Coursework booking system</span>
-    <span>Ankur Das (s389147) · Kazi Azmain Tazwar (S390870)</span>
-  </footer>
-
-  <script src="app.js"></script>
-</body>
+    <script src="app.js"></script>
+  </body>
 </html>
