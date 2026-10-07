@@ -529,21 +529,46 @@ async function setMode(mode) {
   if (mode === "admin") await loadAdmin();
   if (mode === "audit") await loadAudit();
 }
-function renderVenues() {
+function matchingVenues() {
   const attendance = Number($("#attendanceFilter").value || 1),
     access = $("#accessFilter").value,
-    search = $("#searchFilter").value.toLowerCase(),
+    search = $("#searchFilter").value.trim().toLowerCase(),
     equipment = $("#equipmentFilter").value;
-  const matching = state.venues.filter(
+  const terms = search
+    .split(/\s+/)
+    .filter(
+      (term) =>
+        ![
+          "hall",
+          "halls",
+          "centre",
+          "centres",
+          "center",
+          "centers",
+          "community",
+          "facility",
+          "facilities",
+          "venue",
+          "venues",
+        ].includes(term),
+    );
+  return state.venues.filter(
     (v) =>
       v.capacity >= attendance &&
       (access === "any" || v.features.includes(access)) &&
       (equipment === "any" || v.equipment.includes(equipment)) &&
-      [v.name, v.description, ...v.equipment, ...v.labels]
-        .join(" ")
-        .toLowerCase()
-        .includes(search),
+      terms.every((term) =>
+        [v.name, v.description, ...v.equipment, ...v.labels]
+          .join(" ")
+          .toLowerCase()
+          .includes(term),
+      ),
   );
+}
+function renderVenues() {
+  const matching = matchingVenues();
+  if (!matching.some((venue) => venue.id === state.venue))
+    state.venue = matching[0]?.id || "";
   $("#venueList").innerHTML =
     matching
       .map(
@@ -552,8 +577,25 @@ function renderVenues() {
       )
       .join("") ||
     empty(
-      "No matching facility. Try another attendance, equipment or accessibility filter.",
+      "No facilities match these choices. Clear the search or change attendance, equipment or accessibility. Use Reset filters to start again.",
     );
+  const selected = selectedVenue();
+  $("#venueSelection").textContent = !$("#attendanceFilter").validity.valid
+    ? "Enter a whole-number attendance of at least 1."
+    : selected
+      ? `Selected: ${selected.name} · capacity ${selected.capacity}. You can choose another card below.`
+      : "No matching facility selected. Adjust your filters or use Reset filters.";
+  $("#continueFacility").disabled =
+    !selected || !$("#attendanceFilter").validity.valid;
+  updateRequirements();
+}
+function resetFilters(attendance = 20) {
+  $("#searchFilter").value = "";
+  $("#equipmentFilter").value = "any";
+  $("#accessFilter").value = "any";
+  $("#attendanceFilter").value = attendance;
+  renderVenues();
+  notice("");
 }
 function selectedVenue() {
   return state.venues.find((v) => v.id === state.venue);
@@ -668,15 +710,16 @@ function updateRequirements() {
 async function nextStep(next) {
   notice("");
   if (state.step === 1) {
-    const v = selectedVenue(),
-      access = $("#accessFilter").value;
-    if (
-      !v ||
-      !$("#attendanceFilter").reportValidity() ||
-      v.capacity < Number($("#attendanceFilter").value) ||
-      (access !== "any" && !v.features.includes(access))
-    ) {
-      notice("Select a facility matching your requirements.", true);
+    if (!$("#attendanceFilter").reportValidity()) {
+      notice("Enter a whole-number attendance of at least 1.", true);
+      return;
+    }
+    const v = selectedVenue();
+    if (!v || !matchingVenues().some((venue) => venue.id === v.id)) {
+      notice(
+        "No selected facility matches your filters. Change your filters or click Reset filters, then choose a facility.",
+        true,
+      );
       return;
     }
     $("#selectedVenueName").textContent = v.name;
@@ -767,8 +810,13 @@ async function saveDraft() {
 async function restoreDraft() {
   const d = state.draft;
   if (!d) return;
+  const venue = state.venues.find((venue) => venue.id === d.venue);
+  if (!venue || venue.capacity < Number(d.attendance))
+    throw Error(
+      "The draft's facility is no longer available for this attendance. Start a new booking with a suitable facility; your saved draft has been kept.",
+    );
   state.venue = d.venue;
-  renderVenues();
+  resetFilters(d.attendance || 20);
   $("#selectedVenueName").textContent = selectedVenue()?.name || "";
   for (const id of [
     "eventName",
@@ -1688,6 +1736,7 @@ for (const id of [
     id === "accessFilter" || id === "equipmentFilter" ? "change" : "input",
     renderVenues,
   );
+$("#resetFilters").addEventListener("click", () => resetFilters());
 $("#eventDate").addEventListener(
   "change",
   safe(() => loadAvailability()),

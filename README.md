@@ -27,6 +27,17 @@ For a different port:
 .venv\Scripts\python server.py demo --port 8001 --open-browser
 ```
 
+## Booking your first facility
+
+1. Sign in as a customer and open **Find a facility**.
+2. Search **Hall** and select **Projector** if needed. Generic terms such as hall/centre show community facilities. Specific names and equipment narrow the list.
+3. Enter your expected attendance. A matching facility is selected automatically; the **Selected** message tells you which one. Click another card to change it. **Continue** is available only when a displayed facility meets all your filters.
+4. If nothing matches, click **Reset filters**. This clears search/equipment/accessibility and sets attendance to 20. You can then change your requirements again.
+5. Choose a future date and an available time. For a simple first demo, choose **Community meeting**, **No** alcohol, enter the event name, and confirm the adult/privacy declarations.
+6. Review, tick the booking declaration, and submit. In another browser profile, an admin can refresh **Customer booking requests**, select the request, enter a reason and choose **Accept** or **Reject**.
+
+This version includes the `tzdata` package so Darwin dates work on Windows computers without a system timezone database. Run `START_DEMO.bat` after downloading so the required dependencies are installed. Use the newly extracted folder and stop the previous server first; an old server can still display your earlier copy.
+
 ## Mac/Linux
 
 ```bash

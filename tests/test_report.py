@@ -5,6 +5,9 @@ import json
 import sqlite3
 import tempfile
 import unittest
+import os
+import subprocess
+import sys
 from pathlib import Path
 from datetime import timedelta
 from werkzeug.security import generate_password_hash
@@ -19,6 +22,23 @@ class ReportTests(unittest.TestCase):
     book = test_app.BookingTests.book
     setUp = test_app.BookingTests.setUp
     tearDown = test_app.BookingTests.tearDown
+
+    def test_facility_catalog_without_system_timezone_files(self):
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-c",
+                "from zoneinfo import TZPATH; from server import create_app; import sys; assert TZPATH == (); app=create_app({'TESTING':True,'DATABASE':sys.argv[1]}); response=app.test_client().get('/api/venues'); assert response.status_code == 200; assert len(response.json['venues']) == 3; assert response.json['today']; print('Facility catalog loads without system timezone files')",
+                str(Path(self.directory.name) / "windows-timezone.sqlite3"),
+            ],
+            cwd=Path(__file__).resolve().parents[1],
+            env={**os.environ, "PYTHONTZPATH": ""},
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("Facility catalog loads", result.stdout)
 
     def test_portal_entry_and_legacy_links(self):
         entry = self.app.test_client().get("/")

@@ -252,6 +252,118 @@ async function run() {
     },
   );
   await customer.locator('[data-venue="nightcliff"]').click();
+  await check(
+    "Screenshot filters Hall plus Projector find a bookable selected facility",
+    async () => {
+      await customer.fill("#searchFilter", "Hall");
+      await customer.selectOption("#equipmentFilter", "Projector");
+      assert.equal(await customer.locator("[data-venue]").count(), 1);
+      assert.equal(
+        await customer
+          .locator('[data-venue="nightcliff"]')
+          .getAttribute("aria-pressed"),
+        "true",
+      );
+      assert.equal(
+        await customer.locator("#continueFacility").isEnabled(),
+        true,
+      );
+      await customer.click("#continueFacility");
+      await customer.waitForSelector('[data-step="2"]');
+      assert.match(
+        await customer.locator("#selectedVenueName").textContent(),
+        /Nightcliff/,
+      );
+      await customer.click('[data-back="1"]');
+    },
+  );
+  await check(
+    "Incompatible filters cannot continue with a hidden selected facility",
+    async () => {
+      await customer.fill("#searchFilter", "Malak");
+      assert.equal(await customer.locator("[data-venue]").count(), 0);
+      assert.equal(
+        await customer.locator("#continueFacility").isEnabled(),
+        false,
+      );
+      assert.match(
+        await customer.locator("#venueList").textContent(),
+        /No facilities match/,
+      );
+      await customer.selectOption("#equipmentFilter", "Whiteboard");
+      assert.equal(await customer.locator("[data-venue]").count(), 1);
+      assert.equal(
+        await customer
+          .locator('[data-venue="malak"]')
+          .getAttribute("aria-pressed"),
+        "true",
+      );
+      await customer.click("#continueFacility");
+      await customer.waitForSelector('[data-step="2"]');
+      assert.match(
+        await customer.locator("#selectedVenueName").textContent(),
+        /Malak/,
+      );
+      await customer.click('[data-back="1"]');
+      await customer.click("#resetFilters");
+    },
+  );
+  await check(
+    "Attendance validation and Reset filters recover the booking journey",
+    async () => {
+      await customer.fill("#attendanceFilter", "999");
+      assert.equal(await customer.locator("[data-venue]").count(), 0);
+      assert.equal(
+        await customer.locator("#continueFacility").isEnabled(),
+        false,
+      );
+      await customer.fill("#attendanceFilter", "");
+      assert.equal(
+        await customer.locator("#continueFacility").isEnabled(),
+        false,
+      );
+      assert.match(
+        await customer.locator("#venueSelection").textContent(),
+        /whole-number attendance/,
+      );
+      await customer.click("#resetFilters");
+      assert.equal(
+        await customer.locator("#attendanceFilter").inputValue(),
+        "20",
+      );
+      assert.equal(await customer.locator("[data-venue]").count(), 3);
+      assert.equal(
+        await customer.locator("#continueFacility").isEnabled(),
+        true,
+      );
+    },
+  );
+  await check(
+    "Changing requirements selects a visible compatible facility",
+    async () => {
+      await customer.click('[data-venue="lyons"]');
+      await customer.selectOption("#equipmentFilter", "Projector");
+      assert.equal(
+        await customer
+          .locator('[data-venue="nightcliff"]')
+          .getAttribute("aria-pressed"),
+        "true",
+      );
+      assert.match(
+        await customer.locator("#venueSelection").textContent(),
+        /Nightcliff/,
+      );
+      await customer.click("#continueFacility");
+      await customer.waitForSelector('[data-step="2"]');
+      assert.match(
+        await customer.locator("#selectedVenueName").textContent(),
+        /Nightcliff/,
+      );
+      await customer.click('[data-back="1"]');
+      await customer.click("#resetFilters");
+    },
+  );
+  await customer.locator('[data-venue="nightcliff"]').click();
   await customer.fill("#attendanceFilter", "40");
   await customer.click('[data-next="2"]');
   await customer.check('input[name="slot"][value="09:00–12:00"]');
@@ -730,6 +842,72 @@ async function run() {
         await customer.locator("#booking-" + booking.id).textContent(),
         /Rejected/,
       );
+    },
+  );
+  await check(
+    "Simple Hall booking submits through the UI and admin Accept updates the customer",
+    async () => {
+      const page = await customer.context().newPage();
+      page.on("pageerror", (e) => errors.push(e.message));
+      await page.goto(url + "/customer");
+      await page.waitForSelector("#logoutButton");
+      await page.click('.site-header [data-mode="customer"]');
+      await page.fill("#searchFilter", "Hall");
+      await page.selectOption("#equipmentFilter", "Projector");
+      await page.click("#continueFacility");
+      await page.waitForSelector('[data-step="2"]');
+      const date = await page.evaluate(() => {
+        const date = new Date(state.today + "T12:00:00Z");
+        date.setUTCDate(date.getUTCDate() + 56);
+        return date.toISOString().slice(0, 10);
+      });
+      await page.fill("#eventDate", date);
+      await page.waitForSelector(
+        'input[name="slot"][value="09:00–12:00"]:not(:disabled)',
+      );
+      await page.check('input[name="slot"][value="09:00–12:00"]');
+      await page.click('[data-next="3"]');
+      await page.fill("#eventName", "Simple teacher demonstration request");
+      await page.selectOption("#eventType", "Community meeting");
+      await page.check('input[name="alcohol"][value="No"]');
+      await page.check("#adultCheck");
+      await page.check("#privacyCheck");
+      assert.equal(await page.locator("#attendance").inputValue(), "20");
+      assert.match(
+        await page.locator("#evidenceRequirements").textContent(),
+        /No mandatory evidence/,
+      );
+      await page.click('[data-next="4"]');
+      await page.check("#declaration");
+      await page.click("#submitRequest");
+      await page.waitForSelector("#bookingConfirmation .booking-card");
+      const booking = await page.evaluate(async () =>
+        (await api("/bookings")).bookings.find(
+          (booking) =>
+            booking.event_name === "Simple teacher demonstration request",
+        ),
+      );
+      assert.equal(booking.status, "pending");
+      await admin.click("#refreshStaff");
+      await admin.waitForSelector('[data-case="' + booking.id + '"]');
+      await admin.click('[data-case="' + booking.id + '"]');
+      await admin.fill(
+        "#decisionReason",
+        "The event meets the facility rules and has available capacity.",
+      );
+      await admin.click('#staffCase [data-id="' + booking.id + ':approved"]');
+      await admin.waitForFunction(() =>
+        document
+          .querySelector("#staffCase")
+          .textContent.includes("Approved · payment pending"),
+      );
+      await page.click('.site-header [data-mode="bookings"]');
+      await page.waitForSelector("#booking-" + booking.id);
+      assert.match(
+        await page.locator("#booking-" + booking.id).textContent(),
+        /Approved · payment pending/,
+      );
+      await page.close();
     },
   );
   await check("Mobile reflow and HTML-escaped user content", async () => {

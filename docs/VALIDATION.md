@@ -4,8 +4,11 @@ Validation is for the development workspace, not a public deployment or an indep
 
 ## Observed final run · 7 October 2026
 
-- **35 backend tests passed**, with no failed or skipped tests.
-- **24 real-browser acceptance workflows passed**, with no JavaScript runtime errors.
+- **36 backend tests passed**, with no failed or skipped tests.
+- **29 real-browser acceptance workflows passed**, with no JavaScript runtime errors.
+- Both complete suites passed with `PYTHONTZPATH=''`: Darwin dates and the facility catalog used the packaged timezone data instead of system timezone files. This checks the timezone dependency required on Windows; it is not execution of the Windows batch launcher.
+- Pinned dependencies resolved and downloaded as binary packages for Windows x64 / Python 3.12. The Windows launcher itself has not been executed in this Linux workspace.
+- The exact **Hall + Projector** filters from the reported screenshot found a selected Nightcliff facility and allowed continuation. Incompatible filters, invalid/excess attendance and Reset filters were checked. A simple meeting was submitted through the actual UI, accepted by an administrator and displayed as approved in the customer view.
 - Separate portal entry, role-specific dashboards, opposite-portal session routing, and wrong-portal login rejection were checked. The original customer and staff booking workflows passed through the separate portals.
 - Current-instance homepage, venue API, session API, demo account metadata and sample PDF requests returned HTTP 200.
 - Both homepage buttons open email/password popups with bottom signup links. Customer and demo admin signup persist; admin access is withheld until MFA succeeds. Normal mode rejects public admin signup.

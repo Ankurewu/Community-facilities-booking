@@ -321,7 +321,7 @@
               >Search facilities<input
                 id="searchFilter"
                 type="search"
-                placeholder="Name, equipment or access feature" /></label
+                placeholder="e.g. Hall, Nightcliff or Projector" /></label
             ><label
               >Equipment<select id="equipmentFilter">
                 <option value="any">Any equipment</option>
@@ -337,8 +337,8 @@
                 id="attendanceFilter"
                 type="number"
                 min="1"
-                max="120"
-                value="60"
+                value="20"
+                required
                 inputmode="numeric"
               />
             </label>
@@ -356,13 +356,24 @@
             Indicative rates are coursework assumptions, not Council quotations.
             Select a venue card to compare equipment, rules and fees.
           </p>
+          <div class="action-row">
+            <button id="resetFilters" class="secondary-button" type="button">
+              Reset filters
+            </button>
+            <p id="venueSelection" class="help-text" role="status"></p>
+          </div>
           <div
             id="venueList"
             class="venue-grid"
             aria-label="Available community centres"
           ></div>
           <div class="action-row action-row-end">
-            <button class="primary-button" type="button" data-next="2">
+            <button
+              id="continueFacility"
+              class="primary-button"
+              type="button"
+              data-next="2"
+            >
               Continue with selected facility
             </button>
           </div>
